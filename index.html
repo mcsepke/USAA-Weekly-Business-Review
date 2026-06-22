@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>USAA — Environment Review | Rubrik</title>
+<title>USAA Weekly Business Review | Rubrik</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -169,9 +169,77 @@
     .cluster-panel:last-child { border-bottom: none; }
     .page { padding: 16px; }
   }
+
+  /* ── LOGIN GATE ── */
+  #login-gate {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--nav-bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-box {
+    background: #131c30;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 44px 48px;
+    width: 100%; max-width: 400px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    text-align: center;
+  }
+  .login-logo {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 28px;
+  }
+  .login-logo svg { width: 36px; height: 36px; }
+  .login-logo-text { color: #fff; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .login-title { color: #fff; font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .login-sub { color: rgba(255,255,255,0.45); font-size: 13px; margin-bottom: 28px; }
+  .login-label { display: block; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+  .login-input {
+    width: 100%; background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; padding: 11px 14px;
+    color: #fff; font-size: 14px; font-family: inherit;
+    outline: none; margin-bottom: 20px;
+    transition: border-color 0.15s;
+  }
+  .login-input:focus { border-color: var(--rubrik-blue); background: rgba(255,255,255,0.1); }
+  .login-btn {
+    width: 100%; background: var(--rubrik-blue);
+    border: none; border-radius: 8px;
+    padding: 12px; color: #fff;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .login-btn:hover { background: var(--rubrik-blue-dark); }
+  .login-error {
+    color: #f87171; font-size: 12px;
+    margin-top: 12px; min-height: 18px;
+  }
+  .login-footer { color: rgba(255,255,255,0.25); font-size: 11px; margin-top: 24px; }
 </style>
 </head>
 <body>
+
+<!-- ── LOGIN GATE ── -->
+<div id="login-gate">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="48" fill="#0047BB"/>
+        <path d="M30 28h22c8 0 14 5.5 14 13.5 0 6-3.5 10.5-9 12.5l10 18H54l-9-17h-6v17H30V28zm9 8v13h12c3.5 0 6-2.5 6-6.5S54.5 36 51 36H39z" fill="white"/>
+      </svg>
+      <span class="login-logo-text">Rubrik</span>
+    </div>
+    <div class="login-title">USAA Weekly Business Review</div>
+    <div class="login-sub">This document is confidential.<br>Enter the access password to continue.</div>
+    <label class="login-label" for="login-pwd">Password</label>
+    <input class="login-input" type="password" id="login-pwd" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="login-btn" onclick="checkPassword()">Access Dashboard</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-footer">Rubrik &mdash; Confidential &amp; Proprietary</div>
+  </div>
+</div>
+
 
 <!-- TOP NAV -->
 <nav class="topnav">
@@ -185,7 +253,7 @@
     </a>
     <div class="divider-v"></div>
     <div>
-      <div class="account-label">Environment Review</div>
+      <div class="account-label">Weekly Business Review</div>
       <div class="account-name">USAA, Inc.</div>
     </div>
   </div>
@@ -222,7 +290,7 @@
   <div class="page-header">
     <div>
       <div class="page-header-title">Executive Account Summary</div>
-      <div class="page-header-sub">Prepared for USAA, Inc. &mdash; <span id="displayDate">June 23, 2026</span></div>
+      <div class="page-header-sub">USAA Weekly Business Review &mdash; <span id="displayDate">June 23, 2026</span></div>
     </div>
   </div>
 
@@ -2100,6 +2168,41 @@ function renderNotes(saved) {
   if (!saved||!saved.text) return;
   document.getElementById('savedNotesDisplay').innerHTML = `<div class="saved-note"><div class="saved-note-meta">Saved ${saved.savedAt} · Review date: ${saved.reviewDate}</div>${saved.text}</div>`;
 }
+</script>
+<script>
+/* ── PASSWORD GATE ─────────────────────────────────────────────────────────
+   Password is never stored in plain text.
+   The SHA-256 hash of the correct password is compared against the hash of
+   whatever the user types, using the browser's native SubtleCrypto API.
+   The actual password cannot be recovered from this hash.
+─────────────────────────────────────────────────────────────────────────── */
+const STORED_HASH = '0138fe0584c5c700b87a669c683684b878df3f7422f547085b5dbc2efa0ee73e';
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword() {
+  const input = document.getElementById('login-pwd').value;
+  const errEl = document.getElementById('login-error');
+  if (!input) { errEl.textContent = 'Please enter the password.'; return; }
+  const hash = await sha256(input);
+  if (hash === STORED_HASH) {
+    document.getElementById('login-gate').style.display = 'none';
+    document.getElementById('login-pwd').value = '';
+    errEl.textContent = '';
+  } else {
+    errEl.textContent = 'Incorrect password. Please try again.';
+    document.getElementById('login-pwd').value = '';
+    document.getElementById('login-pwd').focus();
+  }
+}
+
+// Allow Enter key on load
+window.addEventListener('load', () => {
+  document.getElementById('login-pwd').focus();
+});
 </script>
 </body>
 </html>
