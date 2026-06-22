@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USAA — Environment Review | Rubrik</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --rubrik-blue: #0047BB; --rubrik-blue-dark: #003494; --rubrik-blue-light: #E6EEFA;
+    --rubrik-teal: #00B4D8; --nav-bg: #0a0f1e; --bg: #f4f6fa; --surface: #ffffff;
+    --border: #e2e6ed; --text-primary: #0d1b2e; --text-secondary: #5a6a7e; --text-muted: #8fa0b4;
+    --green: #1a8a4a; --green-bg: #e8f7ee; --amber: #b45d00; --amber-bg: #fef3e2;
+    --red: #c0392b; --red-bg: #fdecea; --blue-accent: #0047BB; --blue-bg: #e6eefa;
+    --radius: 10px; --radius-sm: 6px; --shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; font-size: 14px; }
+
+  /* NAV */
+  .topnav { background: var(--nav-bg); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 56px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .topnav-left { display: flex; align-items: center; gap: 16px; }
+  .rubrik-logo { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 600; font-size: 15px; text-decoration: none; }
+  .rubrik-logo svg { width: 28px; height: 28px; }
+  .divider-v { width: 1px; height: 24px; background: rgba(255,255,255,0.15); }
+  .account-label { color: rgba(255,255,255,0.65); font-size: 13px; }
+  .account-name { color: #fff; font-weight: 600; font-size: 14px; }
+  .topnav-right { display: flex; align-items: center; gap: 12px; }
+  .review-date-label { color: rgba(255,255,255,0.5); font-size: 12px; }
+  .date-select { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; outline: none; }
+  .date-select option { background: #1a2540; color: #fff; }
+  .cem-badge { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 4px 12px; color: rgba(255,255,255,0.75); font-size: 12px; }
+  .cem-badge span { color: #fff; font-weight: 500; }
+
+  /* TABS */
+  .tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); display: flex; padding: 0 28px; overflow-x: auto; position: sticky; top: 56px; z-index: 90; }
+  .tab { padding: 14px 18px; font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: color 0.15s, border-color 0.15s; user-select: none; }
+  .tab:hover { color: var(--rubrik-blue); }
+  .tab.active { color: var(--rubrik-blue); border-bottom-color: var(--rubrik-blue); }
+
+  /* PAGES */
+  .page { display: none; padding: 28px; max-width: 1280px; margin: 0 auto; }
+  .page.active { display: block; }
+  .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .page-header-title { font-size: 22px; font-weight: 700; color: var(--text-primary); }
+  .page-header-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .section-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; margin-top: 28px; }
+  .section-title:first-child { margin-top: 0; }
+
+  /* GRIDS */
+  .metric-grid { display: grid; gap: 14px; }
+  .metric-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .metric-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .metric-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+  /* METRIC CARDS */
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; box-shadow: var(--shadow); }
+  .metric-card .metric-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 8px; }
+  .metric-card .metric-value { font-size: 32px; font-weight: 700; line-height: 1; color: var(--text-primary); }
+  .metric-card .metric-sub { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+  .metric-card.accent-blue { border-top: 3px solid var(--rubrik-blue); }
+  .metric-card.accent-green { border-top: 3px solid var(--green); }
+  .metric-card.accent-amber { border-top: 3px solid var(--amber); }
+  .metric-card.accent-red { border-top: 3px solid var(--red); }
+  .metric-card.accent-teal { border-top: 3px solid var(--rubrik-teal); }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue-accent); }
+  .badge-gray { background: #f1f3f6; color: var(--text-secondary); }
+  .badge-teal { background: #e0f7fb; color: #007a96; }
+
+  /* TABLES */
+  .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .table-card table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table-card thead th { background: #f8f9fc; padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .table-card tbody tr { border-bottom: 1px solid var(--border); }
+  .table-card tbody tr:last-child { border-bottom: none; }
+  .table-card tbody tr:hover { background: #f8f9fc; }
+  .table-card tbody td { padding: 11px 14px; color: var(--text-primary); vertical-align: middle; }
+  .table-card .section-row td { background: #f0f3f9; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 7px 14px; }
+
+  /* PROGRESS */
+  .progress-wrap { background: #eef1f6; border-radius: 99px; height: 7px; overflow: hidden; min-width: 80px; }
+  .progress-fill { height: 100%; border-radius: 99px; }
+  .fill-green { background: var(--green); }
+  .fill-amber { background: #e07b00; }
+  .fill-red { background: var(--red); }
+  .fill-blue { background: var(--rubrik-blue); }
+  .fill-teal { background: var(--rubrik-teal); }
+
+  /* CLUSTER CARDS */
+  .cluster-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 16px; }
+  .cluster-card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: #fafbfd; }
+  .cluster-card-title { font-weight: 700; font-size: 15px; }
+  .cluster-card-meta { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+  .cluster-card-body { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; }
+  .cluster-panel { padding: 16px 20px; border-right: 1px solid var(--border); }
+  .cluster-panel:last-child { border-right: none; }
+  .cluster-panel-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 12px; }
+  .cluster-stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+  .cluster-stat-row .csr-label { color: var(--text-secondary); }
+  .cluster-stat-row .csr-val { font-weight: 600; color: var(--text-primary); }
+  .cluster-cap-big { font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .cluster-cap-sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+  .entitlement-bar-wrap { margin-top: 10px; }
+  .entitlement-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+
+  /* CAPACITY vs ENTITLEMENT TABLE */
+  .ent-comparison-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 24px; }
+  .ent-comparison-card table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ent-comparison-card thead th { background: #f0f3f9; padding: 10px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .ent-comparison-card tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .ent-comparison-card tbody tr:last-child td { border-bottom: none; }
+  .ent-comparison-card .total-row td { background: #f0f3f9; font-weight: 700; }
+
+  /* AHA */
+  .idea-card { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--rubrik-blue); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .idea-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+  .idea-title { font-weight: 600; font-size: 14px; flex: 1; }
+  .idea-id { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .idea-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .idea-body p { margin-bottom: 6px; }
+  .idea-body strong { color: var(--text-primary); font-weight: 600; }
+
+  /* CHART */
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .chart-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* INFRA TABLE — NCD cluster virtual rows */
+  .row-ncd td { color: var(--text-muted); font-style: italic; }
+
+  /* ACTION ITEMS */
+  
+  .btn-primary { background: var(--rubrik-blue); color: #fff; border: none; border-radius: var(--radius-sm); padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-primary:hover { background: var(--rubrik-blue-dark); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid #f5c6c3; border-radius: var(--radius-sm); padding: 4px 10px; font-size: 12px; cursor: pointer; }
+  .btn-danger:hover { background: var(--red-bg); }
+  .action-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; box-shadow: var(--shadow); display: flex; align-items: flex-start; gap: 14px; margin-bottom: 10px; }
+  .action-item.done { opacity: 0.55; }
+  .action-item.done .action-text { text-decoration: line-through; }
+  .action-check { width: 18px; height: 18px; cursor: pointer; margin-top: 1px; flex-shrink: 0; accent-color: var(--rubrik-blue); }
+  .action-content { flex: 1; }
+  .action-text { font-size: 13px; font-weight: 500; line-height: 1.4; }
+  .action-meta { display: flex; gap: 10px; margin-top: 5px; align-items: center; flex-wrap: wrap; }
+  .action-meta .meta-pill { font-size: 11px; color: var(--text-secondary); background: #f1f3f7; border-radius: 20px; padding: 2px 8px; }
+  .notes-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-top: 20px; }
+  .notes-section textarea { width: 100%; min-height: 140px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; font-size: 13px; font-family: inherit; color: var(--text-primary); resize: vertical; outline: none; background: #fafbfd; margin-top: 10px; line-height: 1.6; }
+  .notes-section textarea:focus { border-color: var(--rubrik-blue); background: #fff; }
+  .notes-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .save-note-btn { margin-top: 8px; background: var(--rubrik-blue); color: #fff; border: none; border-radius: var(--radius-sm); padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .saved-note { background: #f8f9fc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-top: 10px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: var(--text-primary); }
+  .saved-note-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+
+  /* CALLOUT */
+  .callout { border-radius: var(--radius); padding: 14px 18px; font-size: 13px; margin-bottom: 20px; line-height: 1.6; }
+  .callout-blue { background: var(--blue-bg); border: 1px solid #b8cff5; color: #1a3a72; }
+  .callout-amber { background: var(--amber-bg); border: 1px solid #f5d9a0; color: #7a3f00; }
+  .callout strong { font-weight: 700; }
+
+  @media (max-width: 860px) {
+    .metric-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .cluster-card-body { grid-template-columns: 1fr; }
+    .cluster-panel { border-right: none; border-bottom: 1px solid var(--border); }
+    .cluster-panel:last-child { border-bottom: none; }
+    .page { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="topnav-left">
+    <a class="rubrik-logo" href="#">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="48" fill="#0047BB"/>
+        <path d="M30 28h22c8 0 14 5.5 14 13.5 0 6-3.5 10.5-9 12.5l10 18H54l-9-17h-6v17H30V28zm9 8v13h12c3.5 0 6-2.5 6-6.5S54.5 36 51 36H39z" fill="white"/>
+      </svg>
+      Rubrik
+    </a>
+    <div class="divider-v"></div>
+    <div>
+      <div class="account-label">Environment Review</div>
+      <div class="account-name">USAA, Inc.</div>
+    </div>
+  </div>
+  <div class="topnav-right">
+    <span class="review-date-label">Review date</span>
+    <select class="date-select" id="reviewDateSelect" onchange="updateReviewDate()">
+      <option value="2026-06-23" selected>June 23, 2026</option>
+      <option value="2026-06-22">June 22, 2026</option>
+      <option value="2026-03-22">March 22, 2026</option>
+      <option value="2025-12-15">December 15, 2025</option>
+      <option value="2025-09-10">September 10, 2025</option>
+      <option value="2025-06-18">June 18, 2025</option>
+    </select>
+    <span class="cem-badge">CEM: <span>Phil Manno</span></span>
+  </div>
+</nav>
+
+<!-- TABS -->
+<div class="tab-bar" role="tablist">
+  <div class="tab active" onclick="showPage('summary',this)">Summary</div>
+  <div class="tab" onclick="showPage('product-usage',this)">Product Usage</div>
+  <div class="tab" onclick="showPage('infra',this)">Infrastructure Capacity</div>
+  <div class="tab" onclick="showPage('entitlements',this)">License Entitlements</div>
+  <div class="tab" onclick="showPage('clusters',this)">Clusters</div>
+  <div class="tab" onclick="showPage('jiras',this)">Engineering (Jiras)</div>
+  <div class="tab" onclick="showPage('cases',this)">Support Cases</div>
+  <div class="tab" onclick="showPage('aha',this)">Feature Requests</div>
+  <div class="tab" onclick="showPage('statistics',this)">Backup Statistics</div>
+  <div class="tab" onclick="showPage('action-items',this)">Action Items</div>
+</div>
+
+<!-- ══════════════ SUMMARY ══════════════ -->
+<div class="page active" id="page-summary">
+  <div class="page-header">
+    <div>
+      <div class="page-header-title">Executive Account Summary</div>
+      <div class="page-header-sub">Prepared for USAA, Inc. &mdash; <span id="displayDate">June 23, 2026</span></div>
+    </div>
+  </div>
+
+  <div class="section-title">Operational Insights</div>
+  <div class="metric-grid metric-grid-4">
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Open Support Cases</div>
+      <div class="metric-value">5</div>
+      <div class="metric-sub">1 P1 &middot; 4 P2 active</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">Engineering Jiras</div>
+      <div class="metric-value">3</div>
+      <div class="metric-sub">In progress</div>
+    </div>
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Feature Requests</div>
+      <div class="metric-value">5</div>
+      <div class="metric-sub">All status: New</div>
+    </div>
+    <div class="metric-card accent-teal">
+      <div class="metric-label">Active Products</div>
+      <div class="metric-value">2</div>
+      <div class="metric-sub">NAS Cloud Direct &middot; TPH</div>
+    </div>
+  </div>
+
+  <div class="section-title">Environment Insights</div>
+  <div class="metric-grid metric-grid-4">
+    <div class="metric-card accent-green">
+      <div class="metric-label">Capacity Alerts</div>
+      <div class="metric-value" style="color:var(--green)">0</div>
+      <div class="metric-sub">No clusters &gt;75% used</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Version Upgrades Needed</div>
+      <div class="metric-value" style="color:var(--green)">0</div>
+      <div class="metric-sub">All on v9.5.1-p2-36376</div>
+    </div>
+    <div class="metric-card accent-teal">
+      <div class="metric-label">Avg Performance Score</div>
+      <div class="metric-value">98.4<span style="font-size:16px;font-weight:500">%</span></div>
+      <div class="metric-sub">Across all clusters</div>
+    </div>
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Total Usable Capacity</div>
+      <div class="metric-value">28.3<span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">Across 8 physical clusters</div>
+    </div>
+  </div>
+
+  <div class="section-title">License Entitlement vs. Consumption</div>
+  <div class="callout callout-blue">
+    <strong>Entitlement summary:</strong> <strong>Foundation Edition</strong> — consumed by total usable capacity of all physical clusters: 28,266 TB of 37,000 BETB licensed (76.4%, 8,735 BETB headroom). <strong>Enterprise Edition</strong> — consumed by primary local storage across all clusters (excluding replica copies): 5,961 TB of 24,000 BETB licensed (24.8%, 18,039 BETB headroom). <strong>NAS Cloud Direct</strong> — 190 GB of 12,000 FETB protected (~1.5%). All licenses expire July 2030.
+  </div>
+  <div class="metric-grid metric-grid-4">
+    <div class="metric-card accent-amber">
+      <div class="metric-label">Foundation Consumed</div>
+      <div class="metric-value" style="color:var(--amber)">76.4%</div>
+      <div class="metric-sub">28,266 TB usable of 37,000 BETB · 8,735 headroom</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Enterprise Consumed</div>
+      <div class="metric-value" style="color:var(--green)">24.8%</div>
+      <div class="metric-sub">5,961 TB primary of 24,000 BETB · 18,039 headroom</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">NAS Cloud Direct</div>
+      <div class="metric-value" style="color:var(--amber)">~1.5%</div>
+      <div class="metric-sub">190 GB of 12,000 FETB · large headroom</div>
+    </div>
+    <div class="metric-card accent-blue">
+      <div class="metric-label">All Licenses Expire</div>
+      <div class="metric-value" style="font-size:20px">Jul 2030</div>
+      <div class="metric-sub">~4 years, 1 month remaining</div>
+    </div>
+  </div>
+
+  <div class="section-title">Case &amp; Jira Status at a Glance</div>
+  <div class="metric-grid metric-grid-2">
+    <div class="chart-card">
+      <div class="chart-title">Cases by Status</div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)"><span style="width:10px;height:10px;border-radius:2px;background:#1a8a4a;display:inline-block"></span>Resolved (1)</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)"><span style="width:10px;height:10px;border-radius:2px;background:#e07b00;display:inline-block"></span>Resolved – Pending Customer (3)</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)"><span style="width:10px;height:10px;border-radius:2px;background:#c0392b;display:inline-block"></span>Pending Fix (1)</span>
+      </div>
+      <div style="position:relative;height:200px"><canvas id="caseStatusChart" role="img" aria-label="Cases by status donut chart">1 resolved, 3 resolved-pending-customer, 1 pending fix.</canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Jira Status</div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)"><span style="width:10px;height:10px;border-radius:2px;background:#0047BB;display:inline-block"></span>Investigating / Info Req. (1)</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)"><span style="width:10px;height:10px;border-radius:2px;background:#00B4D8;display:inline-block"></span>Investigating (1)</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary)"><span style="width:10px;height:10px;border-radius:2px;background:#8fa0b4;display:inline-block"></span>Accepted / Info Req. (1)</span>
+      </div>
+      <div style="position:relative;height:200px"><canvas id="jiraStatusChart" role="img" aria-label="Jira status donut chart">3 jiras in various investigating states.</canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PRODUCT USAGE ══════════════ -->
+<div class="page" id="page-product-usage">
+  <div class="page-header">
+    <div>
+      <div class="page-header-title">Product Usage</div>
+      <div class="page-header-sub">License consumption from Infrastructure Capacity &amp; Object Capacity reports — June 22, 2026</div>
+    </div>
+  </div>
+
+  <div class="callout callout-blue" style="margin-bottom:20px">
+    <strong>How license consumption is calculated:</strong> <strong>Foundation Edition</strong> is consumed by the total <em>usable capacity</em> of all deployed physical (non-NCD) clusters — 28.27 PB across 8 clusters against a 37.00 PB licensed pool (76.4%). <strong>Enterprise Edition</strong> is consumed by the <em>primary local storage</em> of protected objects — data originating on each cluster, excluding replica copies received from elsewhere — totaling 5.96 PB against a 24.00 PB licensed pool (24.8%). <strong>NAS Cloud Direct</strong> is measured by front-end data protected (FETB), not storage capacity.
+  </div>
+
+  <!-- ── OVERALL SUMMARY ── -->
+  <div class="section-title">Overall License Consumption Summary</div>
+  <div class="metric-grid metric-grid-4" style="margin-bottom:24px">
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Total Licensed</div>
+      <div class="metric-value">61.00 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">Foundation 37 PB + Enterprise 24 PB</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">Foundation Consumed</div>
+      <div class="metric-value" style="color:var(--amber)">28.27 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">Usable capacity deployed — 76.4%</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Enterprise Consumed</div>
+      <div class="metric-value" style="color:var(--green)">5.96 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">Primary local storage — 24.8%</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">NAS Cloud Direct</div>
+      <div class="metric-value" style="color:var(--amber)">~1.5%</div>
+      <div class="metric-sub">190 GB of 12 PB FETB protected</div>
+    </div>
+  </div>
+
+  <!-- ── FOUNDATION ── -->
+  <div class="section-title">Foundation Edition — RS-BT-FE-SC-PE-PP</div>
+  <div class="metric-grid metric-grid-4" style="margin-bottom:16px">
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Licensed</div>
+      <div class="metric-value">37.00 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">37,000 BETB</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">Usable Capacity Deployed</div>
+      <div class="metric-value" style="color:var(--amber)">28.27 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">Across all 8 physical clusters</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">License Utilization</div>
+      <div class="metric-value" style="color:var(--amber)">76.4%</div>
+      <div class="metric-sub">28.27 PB ÷ 37.00 PB licensed</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Remaining Headroom</div>
+      <div class="metric-value" style="color:var(--green)">8.74 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">8,735 BETB before more licenses needed</div>
+    </div>
+  </div>
+  <div class="table-card" style="margin-bottom:8px">
+    <table>
+      <thead>
+        <tr><th>Cluster</th><th>Location</th><th>Usable Capacity (PB)</th><th>% of 37 PB Pool</th><th>Primary Local Storage (PB)</th><th>Environment</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">prdrbrk1atl</td><td>Atlanta, GA</td><td>11.86</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-blue" style="width:100%"></div></div><span style="font-size:12px">32.0%</span></div></td>
+          <td>4.26</td><td><span class="badge badge-blue">Production</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">satpsc1cu1rbrk1</td><td>San Antonio, TX</td><td>11.75</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-blue" style="width:99.1%"></div></div><span style="font-size:12px">31.8%</span></div></td>
+          <td>0.65</td><td><span class="badge badge-blue">Production</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrkatl</td><td>Atlanta, GA</td><td>1.71</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-blue" style="width:14.4%"></div></div><span style="font-size:12px">4.6%</span></div></td>
+          <td>0.65</td><td><span class="badge badge-gray">Test</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrksat</td><td>San Antonio, TX</td><td>1.47</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-blue" style="width:12.5%"></div></div><span style="font-size:12px">4.0%</span></div></td>
+          <td>0.20</td><td><span class="badge badge-gray">Test</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">prdencrbrkatl</td><td>Atlanta, GA</td><td>0.74</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-blue" style="width:6.2%"></div></div><span style="font-size:12px">2.0%</span></div></td>
+          <td>0.07</td><td><span class="badge badge-blue">Production</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">satesc1cu1rbrk1</td><td>San Antonio, TX</td><td>0.73</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-blue" style="width:6.2%"></div></div><span style="font-size:12px">2.0%</span></div></td>
+          <td>0.12</td><td><span class="badge badge-blue">Production</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">devrbrkatl</td><td>Atlanta, GA</td><td>&lt;0.01</td>
+          <td><span style="font-size:12px">&lt;0.1%</span></td>
+          <td>&lt;0.01</td><td><span class="badge badge-gray">Dev</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">devrbrksat</td><td>San Antonio, TX</td><td>&lt;0.01</td>
+          <td><span style="font-size:12px">&lt;0.1%</span></td>
+          <td>0.00</td><td><span class="badge badge-gray">Dev</span></td>
+        </tr>
+        <tr style="background:#f0f3f9;font-weight:600">
+          <td colspan="2">Total Foundation</td><td>28.27 PB deployed</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-amber" style="width:76.4%"></div></div><span style="font-size:12px">76.4%</span></div></td>
+          <td>5.96 PB primary</td>
+          <td><span class="badge badge-amber">Watch headroom</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:11px;color:var(--text-muted);margin-bottom:24px;padding:0 4px">Foundation license consumption = total usable capacity across all 8 deployed physical (non-NCD) clusters. As clusters are expanded or new hardware is added, Foundation PB consumed increases regardless of how much data is stored.</p>
+
+  <!-- ── ENTERPRISE ── -->
+  <div class="section-title">Enterprise Edition — RS-BT-EE-SC-PE-PP</div>
+  <div class="metric-grid metric-grid-4" style="margin-bottom:16px">
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Licensed</div>
+      <div class="metric-value">24.00 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">24,000 BETB</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Primary Local Storage</div>
+      <div class="metric-value" style="color:var(--green)">5.96 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">Primary backup data, no replicas</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">License Utilization</div>
+      <div class="metric-value" style="color:var(--green)">24.8%</div>
+      <div class="metric-sub">5.96 PB ÷ 24.00 PB licensed</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Remaining Headroom</div>
+      <div class="metric-value" style="color:var(--green)">18.04 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">18,039 BETB before more licenses needed</div>
+    </div>
+  </div>
+  <div class="table-card" style="margin-bottom:8px">
+    <table>
+      <thead>
+        <tr><th>Cluster</th><th>Location</th><th>Primary Local Storage (PB)</th><th>% of 24 PB Pool</th><th>Replica Storage (PB)</th><th>Environment</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">prdrbrk1atl</td><td>Atlanta, GA</td><td>4.26</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-teal" style="width:100%"></div></div><span style="font-size:12px">17.8%</span></div></td>
+          <td style="color:var(--text-muted)">0.50</td><td><span class="badge badge-blue">Production</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrkatl</td><td>Atlanta, GA</td><td>0.65</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-teal" style="width:27%"></div></div><span style="font-size:12px">2.7%</span></div></td>
+          <td style="color:var(--text-muted)">0.21</td><td><span class="badge badge-gray">Test</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">satpsc1cu1rbrk1</td><td>San Antonio, TX</td><td>0.65</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-teal" style="width:27%"></div></div><span style="font-size:12px">2.7%</span></div></td>
+          <td style="color:var(--text-muted)">4.60</td><td><span class="badge badge-blue">Production</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrksat</td><td>San Antonio, TX</td><td>0.20</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-teal" style="width:8.5%"></div></div><span style="font-size:12px">0.9%</span></div></td>
+          <td style="color:var(--text-muted)">0.69</td><td><span class="badge badge-gray">Test</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">satesc1cu1rbrk1</td><td>San Antonio, TX</td><td>0.12</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-teal" style="width:5.1%"></div></div><span style="font-size:12px">0.5%</span></div></td>
+          <td style="color:var(--text-muted)">0.08</td><td><span class="badge badge-blue">Production</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">prdencrbrkatl</td><td>Atlanta, GA</td><td>0.07</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-teal" style="width:3.1%"></div></div><span style="font-size:12px">0.3%</span></div></td>
+          <td style="color:var(--text-muted)">0.12</td><td><span class="badge badge-blue">Production</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">devrbrkatl</td><td>Atlanta, GA</td><td>&lt;0.01</td>
+          <td><span style="font-size:12px">&lt;0.01%</span></td>
+          <td style="color:var(--text-muted)">0.00</td><td><span class="badge badge-gray">Dev</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">devrbrksat</td><td>San Antonio, TX</td><td>0.00</td>
+          <td><span style="font-size:12px">&lt;0.01%</span></td>
+          <td style="color:var(--text-muted)">&lt;0.01</td><td><span class="badge badge-gray">Dev</span></td>
+        </tr>
+        <tr style="background:#f0f3f9;font-weight:600">
+          <td colspan="2">Total Enterprise</td><td>5.96 PB primary</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:100px"><div class="progress-fill fill-teal" style="width:24.8%"></div></div><span style="font-size:12px">24.8%</span></div></td>
+          <td style="color:var(--text-muted)">6.20 PB replica</td>
+          <td><span class="badge badge-green">Within license</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;padding:0 4px">Enterprise license consumption = primary local storage only (Object Capacity report, column Q, where Replica Storage = 0). Replica copies received from other clusters are excluded. Note: prdrbrk1atl is the primary home of the largest workloads (4.26 PB primary); satpsc1cu1rbrk1 holds mostly replica data (4.60 PB replica vs. 0.65 PB primary).</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+    <div style="background:#f8f9fc;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px">Enterprise — Primary Storage by Workload Type</div>
+      <div style="font-size:13px;display:flex;flex-direction:column;gap:7px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">NAS Fileset</span><span style="font-weight:600">4.93 PB <span style="font-weight:400;color:var(--text-muted)">(82.7%)</span></span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Db2 Database</span><span style="font-weight:600">0.37 PB <span style="font-weight:400;color:var(--text-muted)">(6.3%)</span></span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">vSphere VM</span><span style="font-weight:600">0.35 PB <span style="font-weight:400;color:var(--text-muted)">(5.9%)</span></span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Oracle DB</span><span style="font-weight:600">0.30 PB <span style="font-weight:400;color:var(--text-muted)">(5.0%)</span></span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">SQL Server DB</span><span style="font-weight:600">0.01 PB <span style="font-weight:400;color:var(--text-muted)">(0.1%)</span></span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Other</span><span style="font-weight:600">&lt;0.01 PB</span></div>
+      </div>
+    </div>
+    <div style="background:#f8f9fc;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px">Replication Context</div>
+      <div style="font-size:13px;display:flex;flex-direction:column;gap:7px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Total primary data</span><span style="font-weight:600">5.96 PB</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Total replica data</span><span style="font-weight:600">6.20 PB</span></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:2px"><span style="color:var(--text-secondary)">Total local storage</span><span style="font-weight:600">12.16 PB</span></div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Replicas are excluded from Enterprise consumption — only primary (source) copies count.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── NAS CLOUD DIRECT ── -->
+  <div class="section-title">NAS Cloud Direct — RS-FT-BE-NCD-PE-PP</div>
+  <div class="metric-grid metric-grid-4" style="margin-bottom:16px">
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Licensed</div>
+      <div class="metric-value">12.00 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">12,000 FETB front-end data protected</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">Data Protected</div>
+      <div class="metric-value" style="color:var(--amber)">190 GB</div>
+      <div class="metric-sub">NCD_TESTSAT only</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">License Utilization</div>
+      <div class="metric-value" style="color:var(--amber)">~1.5%</div>
+      <div class="metric-sub">190 GB of 12.00 PB licensed</div>
+    </div>
+    <div class="metric-card accent-teal">
+      <div class="metric-label">Term Remaining</div>
+      <div class="metric-value" style="font-size:20px">4 yr 1 mo</div>
+      <div class="metric-sub">Expires July 28, 2030</div>
+    </div>
+  </div>
+  <div class="callout callout-amber" style="margin-bottom:24px">
+    <strong>NCD adoption risk:</strong> Only 190 GB of 12 PB licensed is being protected — approximately 1.5% of entitlement. NAS Cloud Direct clusters are virtual data movers licensed by the volume of NAS data they protect, not storage capacity. At current trajectory this entitlement will expire substantially unused.
+  </div>
+
+  <!-- ── RECOMMENDATIONS ── -->
+  <div class="section-title">License Recommendations</div>
+  <div class="table-card">
+    <table>
+      <thead><tr><th>SKU</th><th>Finding</th><th>Recommendation</th><th>Priority</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">Foundation Edition</td>
+          <td>28.27 PB usable capacity deployed of 37.00 PB licensed (76.4%). Headroom is 8.74 PB. Adding new cluster hardware directly reduces this headroom.</td>
+          <td>Validate any planned hardware expansion against the 8.74 PB of remaining headroom. The two large production clusters alone consume 63.8% of the licensed pool.</td>
+          <td><span class="badge badge-amber">Medium</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Enterprise Edition</td>
+          <td>5.96 PB of primary backup data of 24.00 PB licensed (24.8%). Headroom is 18.04 PB. prdrbrk1atl is the dominant primary source at 4.26 PB (17.8% of pool).</td>
+          <td>Significant headroom remains. Monitor primary data growth on prdrbrk1atl. Note satpsc1cu1rbrk1 holds mostly replica data (4.60 PB replica vs. 0.65 PB primary) — confirm replication topology is intentional.</td>
+          <td><span class="badge badge-blue">Low</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">NAS Cloud Direct</td>
+          <td>190 GB protected of 12 PB licensed (~1.5%). Extremely low adoption for a 4-year commitment.</td>
+          <td>Define NAS onboarding milestones and target PB protected by next quarterly review.</td>
+          <td><span class="badge badge-amber">Medium</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════ INFRASTRUCTURE CAPACITY ══════════════ -->
+<div class="page" id="page-infra">
+  <div class="page-header">
+    <div>
+      <div class="page-header-title">Infrastructure Capacity</div>
+      <div class="page-header-sub">Physical and virtual cluster capacity breakdown — as of June 22, 2026</div>
+    </div>
+  </div>
+
+  <div class="callout callout-blue" style="margin-bottom:20px">
+    <strong>NAS Cloud Direct clusters</strong> are software-defined data movers (Virtual type) and carry no usable storage capacity. They are licensed by the amount of data they protect (FETB), not by storage. Capacity columns are not applicable for these clusters.
+  </div>
+
+  <div class="section-title">Physical Clusters (Appliance)</div>
+  <div class="table-card" style="margin-bottom:24px">
+    <table>
+      <thead>
+        <tr>
+          <th>Cluster Name</th>
+          <th>Location</th>
+          <th>Nodes</th>
+          <th>Usable Capacity</th>
+          <th>Used</th>
+          <th>Available</th>
+          <th>% Used</th>
+          <th>Encryption</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">prdrbrk1atl</td>
+          <td>Atlanta, GA</td>
+          <td>64</td>
+          <td><strong>11,856.0 TB</strong></td>
+          <td>4,799.3 TB</td>
+          <td>7,056.7 TB</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:59%"></div></div>
+              <span>59%</span>
+            </div>
+          </td>
+          <td><span class="badge badge-green">Yes</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">satpsc1cu1rbrk1</td>
+          <td>San Antonio, TX</td>
+          <td>94</td>
+          <td><strong>11,747.5 TB</strong></td>
+          <td>5,296.3 TB</td>
+          <td>6,451.2 TB</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:54%"></div></div>
+              <span>54%</span>
+            </div>
+          </td>
+          <td><span class="badge badge-green">Yes</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrkatl</td>
+          <td>Atlanta, GA</td>
+          <td>14</td>
+          <td><strong>1,712.1 TB</strong></td>
+          <td>866.7 TB</td>
+          <td>845.5 TB</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-amber" style="width:49%"></div></div>
+              <span>49%</span>
+            </div>
+          </td>
+          <td><span class="badge badge-green">Yes</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrksat</td>
+          <td>San Antonio, TX</td>
+          <td>12</td>
+          <td><strong>1,467.5 TB</strong></td>
+          <td>903.1 TB</td>
+          <td>564.4 TB</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-amber" style="width:38%"></div></div>
+              <span>38%</span>
+            </div>
+          </td>
+          <td><span class="badge badge-green">Yes</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">prdencrbrkatl</td>
+          <td>Atlanta, GA</td>
+          <td>4</td>
+          <td><strong>741.0 TB</strong></td>
+          <td>192.1 TB</td>
+          <td>549.0 TB</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:26%"></div></div>
+              <span>26%</span>
+            </div>
+          </td>
+          <td><span class="badge badge-green">Yes</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">satesc1cu1rbrk1</td>
+          <td>San Antonio, TX</td>
+          <td>6</td>
+          <td><strong>733.8 TB</strong></td>
+          <td>198.7 TB</td>
+          <td>535.1 TB</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:27%"></div></div>
+              <span>27%</span>
+            </div>
+          </td>
+          <td><span class="badge badge-green">Yes</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">devrbrkatl</td>
+          <td>Atlanta, GA</td>
+          <td>1</td>
+          <td><strong>3.8 TB</strong></td>
+          <td>0.5 TB</td>
+          <td>3.3 TB</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:14%"></div></div>
+              <span>14%</span>
+            </div>
+          </td>
+          <td><span class="badge badge-green">Yes</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">devrbrksat</td>
+          <td>San Antonio, TX</td>
+          <td>1</td>
+          <td><strong>3.8 TB</strong></td>
+          <td>0.5 TB</td>
+          <td>3.3 TB</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:12%"></div></div>
+              <span>12%</span>
+            </div>
+          </td>
+          <td><span class="badge badge-green">Yes</span></td>
+        </tr>
+        <tr style="font-weight:700;background:#f0f3f9">
+          <td colspan="3"><strong>Total Physical</strong></td>
+          <td><strong>28,265.5 TB</strong></td>
+          <td><strong>13,057.2 TB</strong></td>
+          <td><strong>15,208.5 TB</strong></td>
+          <td><strong>46.2% overall</strong></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">NAS Cloud Direct — Virtual Data Movers (No Storage Capacity)</div>
+  <div class="table-card">
+    <table>
+      <thead><tr><th>Cluster Name</th><th>Type</th><th>Nodes</th><th>Capacity</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr class="row-ncd"><td>NCD_TESTSAT</td><td>Virtual</td><td>3</td><td>N/A</td><td>Data mover — licensed by FETB protected, not storage</td></tr>
+        <tr class="row-ncd"><td>NCD_TESTATL</td><td>Virtual</td><td>0</td><td>N/A</td><td>Data mover — licensed by FETB protected, not storage</td></tr>
+        <tr class="row-ncd"><td>NCD_PRDSAT</td><td>Virtual</td><td>0</td><td>N/A</td><td>Data mover — licensed by FETB protected, not storage</td></tr>
+        <tr class="row-ncd"><td>NCD_PRDATL</td><td>Virtual</td><td>0</td><td>N/A</td><td>Data mover — licensed by FETB protected, not storage</td></tr>
+        <tr class="row-ncd"><td>NCD_ENCSAT</td><td>Virtual</td><td>0</td><td>N/A</td><td>Data mover — licensed by FETB protected, not storage</td></tr>
+        <tr class="row-ncd"><td>NCD_ENCATL</td><td>Virtual</td><td>0</td><td>N/A</td><td>Data mover — licensed by FETB protected, not storage</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════ LICENSE ENTITLEMENTS ══════════════ -->
+<div class="page" id="page-entitlements">
+  <div class="page-header">
+    <div>
+      <div class="page-header-title">License Entitlements</div>
+      <div class="page-header-sub">Active entitlements vs. deployed usable capacity — USAA, Inc.</div>
+    </div>
+  </div>
+
+  <div class="section-title">Entitlement vs. Deployed Capacity Comparison</div>
+  <div class="callout callout-blue" style="margin-bottom:20px">
+    <strong>How to read this:</strong> BETB (Back-End Terabyte) represents licensed usable storage capacity. Each physical cluster's <em>usable capacity</em> from the infrastructure report is compared here against the total BETB entitlement pool. NAS Cloud Direct uses FETB (Front-End Terabyte) and is measured by data protected, not storage deployed.
+  </div>
+
+  <div class="ent-comparison-card" style="margin-bottom:24px">
+    <table>
+      <thead>
+        <tr>
+          <th>SKU / Entitlement</th>
+          <th>Entitlement ID</th>
+          <th>Qty (BETB)</th>
+          <th>Type</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="section-row"><td colspan="7">Third Party Hardware (TPH) — Manufacturing Entitlements</td></tr>
+        <tr>
+          <td>RS-BT-FE-SC-PE-PP (Foundation Edition)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fLsM1</td>
+          <td><strong>18,500</strong></td>
+          <td>Manufacturing Entitlement</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr>
+          <td>RS-BT-FE-SC-PE-PP (Foundation Edition)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fLsM2</td>
+          <td><strong>18,500</strong></td>
+          <td>Manufacturing Entitlement</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr>
+          <td>RS-BT-EE-SC-PE-PP (Enterprise Edition)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fLsM3</td>
+          <td><strong>12,000</strong></td>
+          <td>Manufacturing Entitlement</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr>
+          <td>RS-BT-EE-SC-PE-PP (Enterprise Edition)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fLsM4</td>
+          <td><strong>12,000</strong></td>
+          <td>Manufacturing Entitlement</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr class="section-row"><td colspan="7">Third Party Hardware (TPH) — Software Support (Phone Support)</td></tr>
+        <tr>
+          <td>RS-BT-FE-SC-PE-PP (Foundation Edition)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fu1rj</td>
+          <td>18,500</td>
+          <td>Phone Support</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr>
+          <td>RS-BT-FE-SC-PE-PP (Foundation Edition)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fu1rk</td>
+          <td>18,500</td>
+          <td>Phone Support</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr>
+          <td>RS-BT-EE-SC-PE-PP (Enterprise Edition)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fu1rn</td>
+          <td>12,000</td>
+          <td>Phone Support</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr>
+          <td>RS-BT-EE-SC-PE-PP (Enterprise Edition)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fu1ro</td>
+          <td>12,000</td>
+          <td>Phone Support</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr class="section-row"><td colspan="7">NAS Cloud Direct</td></tr>
+        <tr>
+          <td>RS-FT-BE-NCD-PE-PP (NAS Cloud Direct Business Ed.)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fu1rl</td>
+          <td>6,000 <span style="font-size:11px;color:var(--text-muted)">(FETB)</span></td>
+          <td>Phone Support</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr>
+          <td>RS-FT-BE-NCD-PE-PP (NAS Cloud Direct Business Ed.)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fu1rm</td>
+          <td>6,000 <span style="font-size:11px;color:var(--text-muted)">(FETB)</span></td>
+          <td>Phone Support</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+        <tr class="section-row"><td colspan="7">Add-On</td></tr>
+        <tr>
+          <td>RA-CEM-PP (Customer Experience Manager)</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--text-muted)">550VI00000fu1rp</td>
+          <td>1 seat</td>
+          <td>Phone Support</td>
+          <td>7/29/2025</td><td>7/28/2030</td>
+          <td><span class="badge badge-green">Active</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">Capacity vs. Entitlement Summary</div>
+  <div class="metric-grid metric-grid-3" style="margin-bottom:24px">
+    <div class="metric-card accent-amber">
+      <div class="metric-label">Foundation — Usable Capacity Deployed</div>
+      <div class="metric-value" style="color:var(--amber)">28,266 TB</div>
+      <div class="metric-sub">76.4% of 37,000 BETB · 8,735 BETB headroom</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Enterprise — Primary Data Protected</div>
+      <div class="metric-value" style="color:var(--green)">5,961 TB</div>
+      <div class="metric-sub">24.8% of 24,000 BETB · 18,039 BETB headroom</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">NAS Cloud Direct</div>
+      <div class="metric-value" style="color:var(--amber)">~1.5%</div>
+      <div class="metric-sub">190 GB of 12,000 FETB protected</div>
+    </div>
+  </div>
+
+  <div class="ent-comparison-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Cluster</th>
+          <th>Location</th>
+          <th>Usable Capacity (TB)<br><span style="font-weight:400;font-size:10px">Foundation metric</span></th>
+          <th>% of FDN Pool (37,000 BETB)</th>
+          <th>Primary Local Storage (TB)<br><span style="font-weight:400;font-size:10px">Enterprise metric</span></th>
+          <th>% of EE Pool (24,000 BETB)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">prdrbrk1atl</td><td>Atlanta, GA</td><td>11,856.0</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-blue" style="width:100%"></div></div><span style="font-size:11px">32.0%</span></div></td>
+          <td>4,264.9</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-teal" style="width:100%"></div></div><span style="font-size:11px">17.8%</span></div></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">satpsc1cu1rbrk1</td><td>San Antonio, TX</td><td>11,747.5</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-blue" style="width:99%"></div></div><span style="font-size:11px">31.8%</span></div></td>
+          <td>647.0</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-teal" style="width:15.2%"></div></div><span style="font-size:11px">2.7%</span></div></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrkatl</td><td>Atlanta, GA</td><td>1,712.1</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-blue" style="width:14.4%"></div></div><span style="font-size:11px">4.6%</span></div></td>
+          <td>649.2</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-teal" style="width:15.2%"></div></div><span style="font-size:11px">2.7%</span></div></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrksat</td><td>San Antonio, TX</td><td>1,467.5</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-blue" style="width:12.4%"></div></div><span style="font-size:11px">4.0%</span></div></td>
+          <td>204.9</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-teal" style="width:4.8%"></div></div><span style="font-size:11px">0.9%</span></div></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">prdencrbrkatl</td><td>Atlanta, GA</td><td>741.0</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-blue" style="width:6.3%"></div></div><span style="font-size:11px">2.0%</span></div></td>
+          <td>73.4</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-teal" style="width:1.7%"></div></div><span style="font-size:11px">0.3%</span></div></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">satesc1cu1rbrk1</td><td>San Antonio, TX</td><td>733.8</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-blue" style="width:6.2%"></div></div><span style="font-size:11px">2.0%</span></div></td>
+          <td>121.5</td>
+          <td><div style="display:flex;align-items:center;gap:6px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-teal" style="width:2.8%"></div></div><span style="font-size:11px">0.5%</span></div></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">devrbrkatl</td><td>Atlanta, GA</td><td>3.8</td>
+          <td><span style="font-size:11px">&lt;0.1%</span></td>
+          <td>0.5</td><td><span style="font-size:11px">&lt;0.01%</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">devrbrksat</td><td>San Antonio, TX</td><td>3.8</td>
+          <td><span style="font-size:11px">&lt;0.1%</span></td>
+          <td>0.0</td><td><span style="font-size:11px">&lt;0.01%</span></td>
+        </tr>
+        <tr class="section-row"><td colspan="6">NAS Cloud Direct — virtual data movers, no physical storage</td></tr>
+        <tr class="row-ncd">
+          <td colspan="2" style="font-style:italic">NCD Clusters (6 virtual data movers)</td>
+          <td style="font-style:italic">N/A</td><td style="font-style:italic">—</td>
+          <td style="font-style:italic">N/A</td><td style="font-size:12px">190 GB of 12,000 FETB protected (~1.5%)</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="2"><strong>Total (all physical clusters)</strong></td>
+          <td><strong>28,265.5 TB usable</strong></td>
+          <td><strong>76.4% of 37,000 BETB</strong></td>
+          <td><strong>5,961.4 TB primary</strong></td>
+          <td><strong>24.8% of 24,000 BETB</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════ CLUSTERS ══════════════ -->
+<div class="page" id="page-clusters">
+  <div class="page-header">
+    <div>
+      <div class="page-header-title">Cluster Health</div>
+      <div class="page-header-sub">Detailed capacity, performance, and capacity forecasting — all physical clusters</div>
+    </div>
+  </div>
+
+  <div class="section-title">Fleet Overview</div>
+  <div class="metric-grid metric-grid-4" style="margin-bottom:28px">
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Physical Clusters</div>
+      <div class="metric-value">8</div>
+      <div class="metric-sub">All on v9.5.1-p2-36376</div>
+    </div>
+    <div class="metric-card accent-teal">
+      <div class="metric-label">Total Usable Capacity</div>
+      <div class="metric-value">28.3<span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">28,265 TB across 192 nodes</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Avg Performance Score</div>
+      <div class="metric-value" style="color:var(--green)">98.4%</div>
+      <div class="metric-sub">No cluster below 90%</div>
+    </div>
+    <div class="metric-card accent-green">
+      <div class="metric-label">Capacity Alerts</div>
+      <div class="metric-value" style="color:var(--green)">0</div>
+      <div class="metric-sub">No clusters &gt;75% used</div>
+    </div>
+  </div>
+
+  <!-- CLUSTER 1: prdrbrk1atl -->
+  <div class="cluster-card">
+    <div class="cluster-card-header">
+      <div>
+        <div class="cluster-card-title">prdrbrk1atl <span class="badge badge-blue" style="margin-left:8px;vertical-align:middle">Production</span></div>
+        <div class="cluster-card-meta">TPH-MFG-ENT &middot; 64 nodes &middot; Atlanta, GA &middot; v9.5.1-p2-36376 &middot; UUID: 28c378a0-40e8-4574-8031-72b55acb8599</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Performance</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">100%</div>
+      </div>
+    </div>
+    <div class="cluster-card-body">
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity</div>
+        <div class="cluster-cap-big">11,856.0 TB</div>
+        <div class="cluster-cap-sub">Total usable capacity</div>
+        <div class="cluster-stat-row"><span class="csr-label">Used</span><span class="csr-val">4,799.3 TB</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Available</span><span class="csr-val" style="color:var(--green)">7,056.7 TB</span></div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px"><span>Capacity used</span><span>59%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-green" style="width:59%"></div></div>
+        </div>
+        <div class="entitlement-bar-wrap">
+          <div class="entitlement-bar-label"><span>Of Foundation entitlement pool</span><span>32.0%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-blue" style="width:32%"></div></div>
+        </div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity Forecast</div>
+        <div class="cluster-stat-row"><span class="csr-label">Annual Growth</span><span class="csr-val">0%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">80% Threshold</span><span class="csr-val">No near forecast</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Encryption</span><span class="csr-val"><span class="badge badge-green">Yes</span></span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Cluster Type</span><span class="csr-val">Appliance</span></div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Performance Scores</div>
+        <div class="cluster-stat-row"><span class="csr-label">Backup Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Archival Score</span><span class="csr-val color:var(--text-muted)">—</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Replication Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Overall Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUSTER 2: satpsc1cu1rbrk1 -->
+  <div class="cluster-card">
+    <div class="cluster-card-header">
+      <div>
+        <div class="cluster-card-title">satpsc1cu1rbrk1 <span class="badge badge-blue" style="margin-left:8px;vertical-align:middle">Production</span></div>
+        <div class="cluster-card-meta">RBK-F-DELLR740S192, TPH-MFG-ENT &middot; 94 nodes &middot; San Antonio, TX &middot; v9.5.1-p2-36376 &middot; UUID: 32e0cd8d-73a5-48f2-aa71-f93f1458ce1a</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Performance</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">100%</div>
+      </div>
+    </div>
+    <div class="cluster-card-body">
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity</div>
+        <div class="cluster-cap-big">11,747.5 TB</div>
+        <div class="cluster-cap-sub">Total usable capacity</div>
+        <div class="cluster-stat-row"><span class="csr-label">Used</span><span class="csr-val">5,296.3 TB</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Available</span><span class="csr-val" style="color:var(--green)">6,451.2 TB</span></div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px"><span>Capacity used</span><span>54%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-green" style="width:54%"></div></div>
+        </div>
+        <div class="entitlement-bar-wrap">
+          <div class="entitlement-bar-label"><span>Of Foundation entitlement pool</span><span>31.8%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-blue" style="width:31.8%"></div></div>
+        </div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity Forecast</div>
+        <div class="cluster-stat-row"><span class="csr-label">Annual Growth</span><span class="csr-val" style="color:var(--red)">-8.2%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">80% Threshold</span><span class="csr-val">No near forecast</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Encryption</span><span class="csr-val"><span class="badge badge-green">Yes</span></span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Cluster Type</span><span class="csr-val">Appliance</span></div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Performance Scores</div>
+        <div class="cluster-stat-row"><span class="csr-label">Backup Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Archival Score</span><span class="csr-val">—</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Replication Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Overall Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUSTER 3: testrbrkatl -->
+  <div class="cluster-card">
+    <div class="cluster-card-header">
+      <div>
+        <div class="cluster-card-title">testrbrkatl <span class="badge badge-gray" style="margin-left:8px;vertical-align:middle">Test</span> <span class="badge badge-amber" style="margin-left:4px;vertical-align:middle">Watch: 80% → Jul 17</span></div>
+        <div class="cluster-card-meta">RBK-F-DELLR740S192, TPH-MFG-ENT &middot; 14 nodes &middot; Atlanta, GA &middot; v9.5.1-p2-36376 &middot; UUID: 9bf6a77c-80a0-4580-b8cc-cf858fd91da4</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Performance</div>
+        <div style="font-size:22px;font-weight:700;color:var(--amber)">90%</div>
+      </div>
+    </div>
+    <div class="cluster-card-body">
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity</div>
+        <div class="cluster-cap-big">1,712.1 TB</div>
+        <div class="cluster-cap-sub">Total usable capacity</div>
+        <div class="cluster-stat-row"><span class="csr-label">Used</span><span class="csr-val">866.7 TB</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Available</span><span class="csr-val" style="color:var(--amber)">845.5 TB</span></div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px"><span>Capacity used</span><span style="color:var(--amber);font-weight:600">49%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-amber" style="width:49%"></div></div>
+        </div>
+        <div class="entitlement-bar-wrap">
+          <div class="entitlement-bar-label"><span>Of Foundation entitlement pool</span><span>4.6%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-blue" style="width:4.6%"></div></div>
+        </div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity Forecast</div>
+        <div class="cluster-stat-row"><span class="csr-label">Annual Growth</span><span class="csr-val">0%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">80% Threshold</span><span class="csr-val" style="color:var(--amber)">Jul 17, 2026</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">85% Threshold</span><span class="csr-val">Jul 25, 2026</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">90% Threshold</span><span class="csr-val">Aug 2, 2026</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">95% Threshold</span><span class="csr-val">Aug 13, 2026</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Encryption</span><span class="csr-val"><span class="badge badge-green">Yes</span></span></div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Performance Scores</div>
+        <div class="cluster-stat-row"><span class="csr-label">Backup Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Archival Score</span><span class="csr-val">—</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Replication Score</span><span class="csr-val" style="color:var(--amber)">79%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Overall Score</span><span class="csr-val" style="color:var(--amber)">90%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUSTER 4: testrbrksat -->
+  <div class="cluster-card">
+    <div class="cluster-card-header">
+      <div>
+        <div class="cluster-card-title">testrbrksat <span class="badge badge-gray" style="margin-left:8px;vertical-align:middle">Test</span> <span class="badge badge-amber" style="margin-left:4px;vertical-align:middle">Watch: 80% → Aug 20</span></div>
+        <div class="cluster-card-meta">TPH-MFG-ENT &middot; 12 nodes &middot; San Antonio, TX &middot; v9.5.1-p2-36376 &middot; UUID: 91e3afb1-570a-427e-92f2-8ae944955953</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Performance</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">98%</div>
+      </div>
+    </div>
+    <div class="cluster-card-body">
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity</div>
+        <div class="cluster-cap-big">1,467.5 TB</div>
+        <div class="cluster-cap-sub">Total usable capacity</div>
+        <div class="cluster-stat-row"><span class="csr-label">Used</span><span class="csr-val">903.1 TB</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Available</span><span class="csr-val" style="color:var(--amber)">564.4 TB</span></div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px"><span>Capacity used</span><span style="color:var(--amber);font-weight:600">62%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-amber" style="width:62%"></div></div>
+        </div>
+        <div class="entitlement-bar-wrap">
+          <div class="entitlement-bar-label"><span>Of Foundation entitlement pool</span><span>4.0%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-blue" style="width:4%"></div></div>
+        </div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity Forecast</div>
+        <div class="cluster-stat-row"><span class="csr-label">Annual Growth</span><span class="csr-val">0%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">80% Threshold</span><span class="csr-val" style="color:var(--amber)">Aug 20, 2026</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">85% Threshold</span><span class="csr-val">Aug 29, 2026</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">90% Threshold</span><span class="csr-val">Sep 11, 2026</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">95% Threshold</span><span class="csr-val">Sep 22, 2026</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Encryption</span><span class="csr-val"><span class="badge badge-green">Yes</span></span></div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Performance Scores</div>
+        <div class="cluster-stat-row"><span class="csr-label">Backup Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Archival Score</span><span class="csr-val">—</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Replication Score</span><span class="csr-val" style="color:var(--green)">95%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Overall Score</span><span class="csr-val" style="color:var(--green)">98%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUSTER 5: prdencrbrkatl -->
+  <div class="cluster-card">
+    <div class="cluster-card-header">
+      <div>
+        <div class="cluster-card-title">prdencrbrkatl <span class="badge badge-blue" style="margin-left:8px;vertical-align:middle">Production</span></div>
+        <div class="cluster-card-meta">TPH-MFG-ENT &middot; 4 nodes &middot; Atlanta, GA &middot; v9.5.1-p2-36376 &middot; UUID: 83fb595b-5f90-430a-83a3-09cdebe8f415</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Performance</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">100%</div>
+      </div>
+    </div>
+    <div class="cluster-card-body">
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity</div>
+        <div class="cluster-cap-big">741.0 TB</div>
+        <div class="cluster-cap-sub">Total usable capacity</div>
+        <div class="cluster-stat-row"><span class="csr-label">Used</span><span class="csr-val">192.1 TB</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Available</span><span class="csr-val" style="color:var(--green)">548.9 TB</span></div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px"><span>Capacity used</span><span>26%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-green" style="width:26%"></div></div>
+        </div>
+        <div class="entitlement-bar-wrap">
+          <div class="entitlement-bar-label"><span>Of Enterprise entitlement pool</span><span>3.1%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-teal" style="width:3.1%"></div></div>
+        </div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity Forecast</div>
+        <div class="cluster-stat-row"><span class="csr-label">Annual Growth</span><span class="csr-val">0%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">80% Threshold</span><span class="csr-val">No near forecast</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Encryption</span><span class="csr-val"><span class="badge badge-green">Yes</span></span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Cluster Type</span><span class="csr-val">Appliance</span></div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Performance Scores</div>
+        <div class="cluster-stat-row"><span class="csr-label">Backup Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Archival Score</span><span class="csr-val">—</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Replication Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Overall Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUSTER 6: satesc1cu1rbrk1 -->
+  <div class="cluster-card">
+    <div class="cluster-card-header">
+      <div>
+        <div class="cluster-card-title">satesc1cu1rbrk1 <span class="badge badge-blue" style="margin-left:8px;vertical-align:middle">Production</span></div>
+        <div class="cluster-card-meta">RBK-F-DELLR740S192 &middot; 6 nodes &middot; San Antonio, TX &middot; v9.5.1-p2-36376 &middot; UUID: f099a8cc-7d6a-4546-9584-73bd8f8dc256</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Performance</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">100%</div>
+      </div>
+    </div>
+    <div class="cluster-card-body">
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity</div>
+        <div class="cluster-cap-big">733.8 TB</div>
+        <div class="cluster-cap-sub">Total usable capacity</div>
+        <div class="cluster-stat-row"><span class="csr-label">Used</span><span class="csr-val">198.7 TB</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Available</span><span class="csr-val" style="color:var(--green)">535.1 TB</span></div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px"><span>Capacity used</span><span>27%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-green" style="width:27%"></div></div>
+        </div>
+        <div class="entitlement-bar-wrap">
+          <div class="entitlement-bar-label"><span>Of Enterprise entitlement pool</span><span>3.1%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-teal" style="width:3.1%"></div></div>
+        </div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity Forecast</div>
+        <div class="cluster-stat-row"><span class="csr-label">Annual Growth</span><span class="csr-val" style="color:var(--red)">-0.85%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">80% Threshold</span><span class="csr-val">No near forecast</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Encryption</span><span class="csr-val"><span class="badge badge-green">Yes</span></span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Cluster Type</span><span class="csr-val">Appliance</span></div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Performance Scores</div>
+        <div class="cluster-stat-row"><span class="csr-label">Backup Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Archival Score</span><span class="csr-val">—</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Replication Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Overall Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUSTER 7: devrbrkatl -->
+  <div class="cluster-card">
+    <div class="cluster-card-header">
+      <div>
+        <div class="cluster-card-title">devrbrkatl <span class="badge badge-gray" style="margin-left:8px;vertical-align:middle">Dev</span></div>
+        <div class="cluster-card-meta">TPH-MFG-ENT &middot; 1 node &middot; Atlanta, GA &middot; v9.5.1-p2-36376 &middot; UUID: 16f7d705-3ca3-425f-9119-0ebd51cb82e1</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Performance</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">100%</div>
+      </div>
+    </div>
+    <div class="cluster-card-body">
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity</div>
+        <div class="cluster-cap-big">3.8 TB</div>
+        <div class="cluster-cap-sub">Total usable capacity (single node)</div>
+        <div class="cluster-stat-row"><span class="csr-label">Used</span><span class="csr-val">0.5 TB</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Available</span><span class="csr-val" style="color:var(--green)">3.3 TB</span></div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px"><span>Capacity used</span><span>14%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-green" style="width:14%"></div></div>
+        </div>
+        <div class="entitlement-bar-wrap">
+          <div class="entitlement-bar-label"><span>Of Enterprise entitlement pool</span><span>&lt;0.1%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-teal" style="width:0.1%"></div></div>
+        </div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity Forecast</div>
+        <div class="cluster-stat-row"><span class="csr-label">Annual Growth</span><span class="csr-val">0%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">80% Threshold</span><span class="csr-val">No near forecast</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Encryption</span><span class="csr-val"><span class="badge badge-green">Yes</span></span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Cluster Type</span><span class="csr-val">Appliance</span></div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Performance Scores</div>
+        <div class="cluster-stat-row"><span class="csr-label">Backup Score</span><span class="csr-val">—</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Archival Score</span><span class="csr-val">—</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Replication Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Overall Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUSTER 8: devrbrksat -->
+  <div class="cluster-card">
+    <div class="cluster-card-header">
+      <div>
+        <div class="cluster-card-title">devrbrksat <span class="badge badge-gray" style="margin-left:8px;vertical-align:middle">Dev</span></div>
+        <div class="cluster-card-meta">TPH-MFG-ENT &middot; 1 node &middot; San Antonio, TX &middot; v9.5.1-p2-36376 &middot; UUID: 392922fa-4050-439e-b1b9-7dc885c111f6</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Performance</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green)">100%</div>
+      </div>
+    </div>
+    <div class="cluster-card-body">
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity</div>
+        <div class="cluster-cap-big">3.8 TB</div>
+        <div class="cluster-cap-sub">Total usable capacity (single node)</div>
+        <div class="cluster-stat-row"><span class="csr-label">Used</span><span class="csr-val">0.5 TB</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Available</span><span class="csr-val" style="color:var(--green)">3.3 TB</span></div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px"><span>Capacity used</span><span>12%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-green" style="width:12%"></div></div>
+        </div>
+        <div class="entitlement-bar-wrap">
+          <div class="entitlement-bar-label"><span>Of Enterprise entitlement pool</span><span>&lt;0.1%</span></div>
+          <div class="progress-wrap"><div class="progress-fill fill-teal" style="width:0.1%"></div></div>
+        </div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Capacity Forecast</div>
+        <div class="cluster-stat-row"><span class="csr-label">Annual Growth</span><span class="csr-val">0%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">80% Threshold</span><span class="csr-val">No near forecast</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Encryption</span><span class="csr-val"><span class="badge badge-green">Yes</span></span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Cluster Type</span><span class="csr-val">Appliance</span></div>
+      </div>
+      <div class="cluster-panel">
+        <div class="cluster-panel-label">Performance Scores</div>
+        <div class="cluster-stat-row"><span class="csr-label">Backup Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Archival Score</span><span class="csr-val">—</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Replication Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+        <div class="cluster-stat-row"><span class="csr-label">Overall Score</span><span class="csr-val" style="color:var(--green)">100%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ JIRAS ══════════════ -->
+<div class="page" id="page-jiras">
+  <div class="page-header"><div><div class="page-header-title">Engineering Escalations (Jiras)</div><div class="page-header-sub">Active engineering investigations tied to USAA cases</div></div></div>
+  <div class="table-card">
+    <table>
+      <thead><tr><th>Jira Reference</th><th>Subject</th><th>Case #</th><th>Component</th><th>Status</th><th>Case Owner</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-family:monospace;font-weight:600;color:var(--rubrik-blue)">SPARK-772489</td>
+          <td>RSC error: "An error occurred while fetching data"</td><td>1090479</td><td>Forge - Platform</td>
+          <td><span class="badge badge-amber">Investigating – Info Requested</span></td>
+          <td>Pradeep Kumar Narayana Swamy</td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-weight:600;color:var(--rubrik-blue)">CDM-552213</td>
+          <td>NAS backups failing</td><td>1236802</td><td>Infinity - NAS</td>
+          <td><span class="badge badge-red">Investigating</span></td>
+          <td>Syed Sameerulla</td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace;font-weight:600;color:var(--rubrik-blue)">CDM-551512</td>
+          <td>Unable to fetch the Expiration date in the UI</td><td>1237258</td><td>VMWare</td>
+          <td><span class="badge badge-gray">Accepted – Info Requested</span></td>
+          <td>Rythem Arora</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════ CASES ══════════════ -->
+<div class="page" id="page-cases">
+  <div class="page-header"><div><div class="page-header-title">Support Cases</div><div class="page-header-sub">All active and recently resolved support cases for USAA</div></div></div>
+  <div class="metric-grid metric-grid-3" style="margin-bottom:24px">
+    <div class="metric-card accent-red"><div class="metric-label">P1 Cases</div><div class="metric-value" style="color:var(--red)">1</div><div class="metric-sub">Pending fix</div></div>
+    <div class="metric-card accent-amber"><div class="metric-label">P2 Cases</div><div class="metric-value" style="color:var(--amber)">4</div><div class="metric-sub">Various statuses</div></div>
+    <div class="metric-card accent-green"><div class="metric-label">Resolved</div><div class="metric-value" style="color:var(--green)">4</div><div class="metric-sub">1 fully resolved · 3 pending customer</div></div>
+  </div>
+  <div class="table-card">
+    <table>
+      <thead><tr><th>Case #</th><th>Subject</th><th>Priority</th><th>Status</th><th>Case Owner</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:600;font-family:monospace">1236802</td><td>Failed backup after upgrade</td><td><span class="badge badge-red">P1</span></td><td><span class="badge badge-red">Pending Fix</span></td><td>Syed Sameerulla</td></tr>
+        <tr><td style="font-weight:600;font-family:monospace">1090479</td><td>RSC Error</td><td><span class="badge badge-amber">P2</span></td><td><span class="badge badge-green">Resolved</span></td><td>Pradeep Kumar Narayana Swamy</td></tr>
+        <tr><td style="font-weight:600;font-family:monospace">1230057</td><td>Backup failing intermittently</td><td><span class="badge badge-amber">P2</span></td><td><span class="badge badge-amber">Resolved – Pending Customer</span></td><td>Sudipta Bhaskar</td></tr>
+        <tr><td style="font-weight:600;font-family:monospace">1234012</td><td>Backup</td><td><span class="badge badge-amber">P2</span></td><td><span class="badge badge-amber">Resolved – Pending Customer</span></td><td>Hemanth Kodi</td></tr>
+        <tr><td style="font-weight:600;font-family:monospace">1237258</td><td>False positive alert</td><td><span class="badge badge-amber">P2</span></td><td><span class="badge badge-amber">Resolved – Pending Customer</span></td><td>Rythem Arora</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════ AHA ══════════════ -->
+<div class="page" id="page-aha">
+  <div class="page-header"><div><div class="page-header-title">Feature Requests (AHA)</div><div class="page-header-sub">Open product ideas submitted by USAA to Rubrik engineering</div></div></div>
+  <div class="idea-card">
+    <div class="idea-header"><div class="idea-title">Separate filters for Oracle standalone DBs and Data Guard groups</div><div><div class="idea-id">RBK-I-6967</div><div style="margin-top:4px"><span class="badge badge-blue">New</span></div></div></div>
+    <div class="idea-body">
+      <p><strong>Problem:</strong> RSC Object Protection Report shows "Oracle DB" as the only filter, but SLA can be assigned at the Data Guard Group level, causing misleading "No SLA assigned" entries for DG members.</p>
+      <p><strong>Business Impact:</strong> Requires manual reconciliation after every report, reducing confidence in protection status.</p>
+      <p><strong>Linked Case:</strong> 1232081 &middot; <strong>Product Area:</strong> Platform / RSC Reporting</p>
+    </div>
+  </div>
+  <div class="idea-card">
+    <div class="idea-header"><div class="idea-title">Email reports to use RSC local time zone instead of UTC</div><div><div class="idea-id">RBK-I-6581</div><div style="margin-top:4px"><span class="badge badge-blue">New</span></div></div></div>
+    <div class="idea-body">
+      <p><strong>Problem:</strong> Emailed reports default to UTC, creating a discrepancy with local time displayed in the RSC UI.</p>
+      <p><strong>Proposed Solution:</strong> Update the email reporting engine to inherit and apply the customer's local time zone settings.</p>
+      <p><strong>Linked Case:</strong> 1172031 &middot; <strong>Product Area:</strong> Platform / RSC Reporting</p>
+    </div>
+  </div>
+  <div class="idea-card">
+    <div class="idea-header"><div class="idea-title">Configurable, more frequent replication reporting schedule in RSC</div><div><div class="idea-id">RBK-I-6861</div><div style="margin-top:4px"><span class="badge badge-blue">New</span></div></div></div>
+    <div class="idea-body">
+      <p><strong>Problem:</strong> Replication status and lag are only refreshed once per day, creating a visibility gap during incidents and audits.</p>
+      <p><strong>Proposed Solution:</strong> Allow configurable report frequency (e.g., every 1/3/6 hours or cron-style), plus a lightweight real-time replication status view.</p>
+      <p><strong>Linked Case:</strong> 1165501 &middot; <strong>Product Area:</strong> Platform / Replication</p>
+    </div>
+  </div>
+  <div class="idea-card">
+    <div class="idea-header"><div class="idea-title">Configurable replication lag alerts and notifications</div><div><div class="idea-id">RBK-I-6862</div><div style="margin-top:4px"><span class="badge badge-blue">New</span></div></div></div>
+    <div class="idea-body">
+      <p><strong>Problem:</strong> No granular alerting for replication lag. Lag can grow silently, creating RPO/RTO risk that's only discovered during incidents.</p>
+      <p><strong>Proposed Solution:</strong> Configurable lag thresholds (warning/critical) at the SLA Domain or replication relationship level, with email, webhook, syslog/SIEM, and in-product notification channels.</p>
+      <p><strong>Linked Case:</strong> 1165501 &middot; <strong>Product Area:</strong> Platform / Replication</p>
+    </div>
+  </div>
+  <div class="idea-card" style="border-left-color:var(--red)">
+    <div class="idea-header"><div class="idea-title">RSC UI support for managing NFS export IP/subnet overrides (nfsExportsOverride)</div><div><div class="idea-id">RBK-I-6903</div><div style="margin-top:4px"><span class="badge badge-red">High Impact</span></div></div></div>
+    <div class="idea-body">
+      <p><strong>Problem:</strong> Tied to Qualys QID-66002 finding and USAA host-list scalability risk. Currently requires API-only management, creating security exception overhead.</p>
+      <p><strong>Business Impact:</strong> Pre-requisite to expansion with Physical Clusters, Edge, Virtual, and Cloud Clusters. Opportunities linked to this item — Identity Resilience and Universal Cloud Licenses in AWS — represent over <strong>$1M in ACV combined</strong>.</p>
+      <p><strong>Linked Case:</strong> 1089707 &middot; <strong>Product Area:</strong> Platform / Security</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ BACKUP STATISTICS ══════════════ -->
+<div class="page" id="page-statistics">
+  <div class="page-header">
+    <div>
+      <div class="page-header-title">Backup Statistics</div>
+      <div class="page-header-sub">Event report analysis — 16,103 backup events · June 22, 2026</div>
+    </div>
+  </div>
+
+  <!-- ── OVERALL SUCCESS ── -->
+  <div class="section-title">Overall Success Rate</div>
+  <div class="metric-grid metric-grid-4" style="margin-bottom:24px">
+    <div class="metric-card accent-green">
+      <div class="metric-label">Success Rate (completed)</div>
+      <div class="metric-value" style="color:var(--green)">97.4%</div>
+      <div class="metric-sub">7,824 of 8,029 completed tasks succeeded</div>
+    </div>
+    <div class="metric-card accent-red">
+      <div class="metric-label">Failure Rate</div>
+      <div class="metric-value" style="color:var(--red)">2.4%</div>
+      <div class="metric-sub">196 failures · 9 canceled</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">Succeeded with Warnings</div>
+      <div class="metric-value" style="color:var(--amber)">218</div>
+      <div class="metric-sub">2.7% of successful completions</div>
+    </div>
+    <div class="metric-card accent-blue">
+      <div class="metric-label">In Queue / Running</div>
+      <div class="metric-value">8,074</div>
+      <div class="metric-sub">8,056 queued · 18 running at report time</div>
+    </div>
+  </div>
+
+  <!-- STATUS CHART + BREAKDOWN -->
+  <div class="metric-grid metric-grid-2" style="margin-bottom:28px">
+    <div class="chart-card">
+      <div class="chart-title">Completed tasks by outcome</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--text-secondary)">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#1a8a4a;display:inline-block"></span>Succeeded (7,606)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#e07b00;display:inline-block"></span>Succeeded w/ Warnings (218)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#c0392b;display:inline-block"></span>Failed (196)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#8fa0b4;display:inline-block"></span>Canceled (9)</span>
+      </div>
+      <div style="position:relative;height:220px"><canvas id="overallStatusChart" role="img" aria-label="Donut chart: 7606 succeeded, 218 succeeded with warnings, 196 failed, 9 canceled">7606 succeeded, 218 succeeded with warnings, 196 failed, 9 canceled.</canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Failures by object type</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--text-secondary)">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#c0392b;display:inline-block"></span>Db2 Database (131)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#0047BB;display:inline-block"></span>NAS on RSC (28)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#00B4D8;display:inline-block"></span>vSphere VM (22)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#8fa0b4;display:inline-block"></span>SQL Server (12) + Other (3)</span>
+      </div>
+      <div style="position:relative;height:220px"><canvas id="failureTypeChart" role="img" aria-label="Donut chart of failures by object type">131 Db2, 28 NAS, 22 vSphere, 12 SQL, 3 other.</canvas></div>
+    </div>
+  </div>
+
+  <!-- ── COMPLETION TIME STATS ── -->
+  <div class="section-title">Completion Time — Overall (7,823 succeeded tasks)</div>
+  <div class="metric-grid metric-grid-4" style="margin-bottom:16px">
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Average Duration</div>
+      <div class="metric-value">13.1 <span style="font-size:16px;font-weight:500">min</span></div>
+      <div class="metric-sub">Median: 5.3 min</div>
+    </div>
+    <div class="metric-card accent-teal">
+      <div class="metric-label">95th Percentile</div>
+      <div class="metric-value">39.9 <span style="font-size:16px;font-weight:500">min</span></div>
+      <div class="metric-sub">95% of tasks finish within 40 min</div>
+    </div>
+    <div class="metric-card accent-amber">
+      <div class="metric-label">99th Percentile</div>
+      <div class="metric-value">146.0 <span style="font-size:16px;font-weight:500">min</span></div>
+      <div class="metric-sub">2.43 hours</div>
+    </div>
+    <div class="metric-card accent-red">
+      <div class="metric-label">Longest Task</div>
+      <div class="metric-value">26.9 <span style="font-size:16px;font-weight:500">hr</span></div>
+      <div class="metric-sub">NAS on RSC · satpsc1cu1rbrk1</div>
+    </div>
+  </div>
+
+  <!-- DURATION DISTRIBUTION CHART -->
+  <div class="chart-card" style="margin-bottom:24px">
+    <div class="chart-title">Duration distribution — succeeded tasks</div>
+    <div style="position:relative;height:240px"><canvas id="durationDistChart" role="img" aria-label="Bar chart of task duration distribution">17 under 1 min, 3652 between 1-5 min, 3122 between 5-15 min, 522 between 15-30 min, 278 between 30-60 min, 141 between 1-2 hours, 59 between 2-5 hours, 21 between 5-10 hours, 11 over 10 hours.</canvas></div>
+  </div>
+
+  <!-- ── BY OBJECT TYPE ── -->
+  <div class="section-title">Performance by Object Type</div>
+  <div class="table-card" style="margin-bottom:24px">
+    <table>
+      <thead>
+        <tr>
+          <th>Object Type</th>
+          <th>Tasks</th>
+          <th>Success Rate</th>
+          <th>Avg Duration</th>
+          <th>Median</th>
+          <th>p95</th>
+          <th>Max</th>
+          <th>Failures</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">vSphere VM</td>
+          <td>2,985</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:99.3%"></div></div>
+              <span style="color:var(--green);font-weight:600">99.3%</span>
+            </div>
+          </td>
+          <td>5.8 min</td><td>4.6 min</td><td>12.6 min</td><td>47.5 min</td>
+          <td><span class="badge badge-green">22</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">SQL Server DB</td>
+          <td>1,670</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:98.8%"></div></div>
+              <span style="color:var(--green);font-weight:600">98.8%</span>
+            </div>
+          </td>
+          <td>11.7 min</td><td>7.5 min</td><td>34.6 min</td><td>95.7 min</td>
+          <td><span class="badge badge-green">12</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">NAS on RSC</td>
+          <td>1,704</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:98.4%"></div></div>
+              <span style="color:var(--green);font-weight:600">98.4%</span>
+            </div>
+          </td>
+          <td>21.3 min</td><td>7.1 min</td><td>74.5 min</td><td>1,613.0 min</td>
+          <td><span class="badge badge-amber">28</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Oracle DB</td>
+          <td>97</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:99%"></div></div>
+              <span style="color:var(--green);font-weight:600">99.0%</span>
+            </div>
+          </td>
+          <td>32.8 min</td><td>26.0 min</td><td>116.3 min</td><td>294.8 min</td>
+          <td><span class="badge badge-green">1</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Db2 Database</td>
+          <td>1,360</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-amber" style="width:91.2%"></div></div>
+              <span style="color:var(--amber);font-weight:600">91.2%</span>
+            </div>
+          </td>
+          <td>19.4 min</td><td>8.5 min</td><td>76.0 min</td><td>1,238.2 min</td>
+          <td><span class="badge badge-red">131</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">Windows Fileset</td>
+          <td>3</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="progress-wrap" style="width:80px"><div class="progress-fill fill-amber" style="width:60%"></div></div>
+              <span style="color:var(--amber);font-weight:600">60.0%</span>
+            </div>
+          </td>
+          <td>13.3 min</td><td>12.8 min</td><td>16.0 min</td><td>16.2 min</td>
+          <td><span class="badge badge-amber">2</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── BY CLUSTER ── -->
+  <div class="section-title">Performance by Cluster</div>
+  <div class="table-card" style="margin-bottom:24px">
+    <table>
+      <thead>
+        <tr>
+          <th>Cluster</th>
+          <th>Completed Tasks</th>
+          <th>Success Rate</th>
+          <th>Failures</th>
+          <th>Avg Duration</th>
+          <th>p95 Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">satesc1cu1rbrk1</td><td>51</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:100%"></div></div><span style="color:var(--green);font-weight:600">100.0%</span></div></td>
+          <td><span class="badge badge-green">0</span></td><td>39.8 min</td><td>266.5 min</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">NCD_TESTSAT</td><td>2</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:100%"></div></div><span style="color:var(--green);font-weight:600">100.0%</span></div></td>
+          <td><span class="badge badge-green">0</span></td><td>0.4 min</td><td>0.6 min</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">satpsc1cu1rbrk1</td><td>1,234</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:99.8%"></div></div><span style="color:var(--green);font-weight:600">99.8%</span></div></td>
+          <td><span class="badge badge-green">2</span></td><td>24.9 min</td><td>101.2 min</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrksat</td><td>4,691</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:97.9%"></div></div><span style="color:var(--green);font-weight:600">97.9%</span></div></td>
+          <td><span class="badge badge-amber">90</span></td><td>11.3 min</td><td>34.6 min</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">prdrbrk1atl</td><td>199</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:97%"></div></div><span style="color:var(--green);font-weight:600">97.0%</span></div></td>
+          <td><span class="badge badge-amber">6</span></td><td>35.2 min</td><td>202.9 min</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">prdencrbrkatl</td><td>13</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-green" style="width:92.3%"></div></div><span style="color:var(--green);font-weight:600">92.3%</span></div></td>
+          <td><span class="badge badge-amber">1</span></td><td>7.9 min</td><td>18.1 min</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">testrbrkatl</td><td>1,816</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-amber" style="width:95.6%"></div></div><span style="color:var(--amber);font-weight:600">95.6%</span></div></td>
+          <td><span class="badge badge-amber">77</span></td><td>6.4 min</td><td>16.5 min</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">devrbrksat</td><td>23</td>
+          <td><div style="display:flex;align-items:center;gap:8px"><div class="progress-wrap" style="width:80px"><div class="progress-fill fill-red" style="width:13%"></div></div><span style="color:var(--red);font-weight:600">13.0%</span></div></td>
+          <td><span class="badge badge-red">20</span></td><td>6.1 min</td><td>14.7 min</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── LONGEST RUNNING TASKS ── -->
+  <div class="section-title">Longest Running Tasks (Top 10 — Succeeded)</div>
+  <div class="table-card" style="margin-bottom:24px">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Object</th><th>Type</th><th>Cluster</th><th>Duration</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">1</td>
+          <td style="font-size:12px">/pnc_ecm_cs10_d16 (prodnasdocsat2)</td>
+          <td>NAS on RSC</td><td>satpsc1cu1rbrk1</td>
+          <td><span style="font-weight:700;color:var(--red)">26.9 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">2</td>
+          <td style="font-size:12px">VNCOHIOR</td>
+          <td>Db2 Database</td><td>satpsc1cu1rbrk1</td>
+          <td><span style="font-weight:700;color:var(--red)">20.6 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">3</td>
+          <td style="font-size:12px">/ent_ecm_cs01_d16 (prodnasdocsat1)</td>
+          <td>NAS on RSC</td><td>satpsc1cu1rbrk1</td>
+          <td><span style="font-weight:700;color:var(--red)">18.3 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">4</td>
+          <td style="font-size:12px">/bank2_ecm_cs01_d232 (prodnasdocsat1)</td>
+          <td>NAS on RSC</td><td>satpsc1cu1rbrk1</td>
+          <td><span style="font-weight:700;color:var(--red)">18.2 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">5</td>
+          <td style="font-size:12px">/pnc_ecm_cs05_d167 (prodnasdocsat2)</td>
+          <td>NAS on RSC</td><td>satpsc1cu1rbrk1</td>
+          <td><span style="font-weight:700;color:var(--amber)">16.8 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">6</td>
+          <td style="font-size:12px">USIMMOR</td>
+          <td>Db2 Database</td><td>prdrbrk1atl</td>
+          <td><span style="font-weight:700;color:var(--amber)">16.5 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">7</td>
+          <td style="font-size:12px">/bank_ecm_cs02_d232 (prodnasdocsat1)</td>
+          <td>NAS on RSC</td><td>satpsc1cu1rbrk1</td>
+          <td><span style="font-weight:700;color:var(--amber)">15.7 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">8</td>
+          <td style="font-size:12px">/Datastage (testnasgp2)</td>
+          <td>NAS on RSC</td><td>testrbrksat</td>
+          <td><span style="font-weight:700;color:var(--amber)">13.2 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">9</td>
+          <td style="font-size:12px">BKODL1DB</td>
+          <td>Db2 Database</td><td>satpsc1cu1rbrk1</td>
+          <td><span style="font-weight:700;color:var(--amber)">11.4 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-muted);font-weight:600">10</td>
+          <td style="font-size:12px">/pnc_ecm_cs10_d16 (prodnasdocsat2) — run 2</td>
+          <td>NAS on RSC</td><td>satpsc1cu1rbrk1</td>
+          <td><span style="font-weight:700;color:var(--amber)">11.1 hr</span></td>
+          <td><span class="badge badge-green">Succeeded</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── BIGGEST FAILURE OFFENDERS ── -->
+  <div class="section-title">Most Frequently Failing Objects</div>
+  <div class="callout callout-amber" style="margin-bottom:16px">
+    <strong>Root cause pattern:</strong> 131 of 196 total failures (67%) are Db2 log synchronization errors — predominantly on <strong>MPCACHDB</strong> (29 failures) and <strong>MPDCLKDB</strong> (27 failures). These share the same failure reason: <em>"Unable to synchronize log backups"</em>, likely pointing to a single Db2 agent configuration issue on <code>testudbcach103latl.usaa.com</code>.
+  </div>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr><th>Rank</th><th>Object</th><th>Type</th><th>Failures</th><th>Root Cause</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--red);font-weight:700">1</td>
+          <td style="font-weight:600">MPCACHDB</td><td>Db2 Database</td>
+          <td><span class="badge badge-red">29 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · testudbcach103latl</td>
+        </tr>
+        <tr>
+          <td style="color:var(--red);font-weight:700">2</td>
+          <td style="font-weight:600">MPDCLKDB</td><td>Db2 Database</td>
+          <td><span class="badge badge-red">27 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · testudbcach103latl</td>
+        </tr>
+        <tr>
+          <td style="color:var(--amber);font-weight:700">3</td>
+          <td style="font-weight:600">NHLEADDB</td><td>Db2 Database</td>
+          <td><span class="badge badge-amber">9 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · Db2 agent error</td>
+        </tr>
+        <tr>
+          <td style="color:var(--amber);font-weight:700">4</td>
+          <td style="font-weight:600">BKCPIFDB</td><td>Db2 Database</td>
+          <td><span class="badge badge-amber">8 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · Db2 agent error</td>
+        </tr>
+        <tr>
+          <td style="color:var(--amber);font-weight:700">4</td>
+          <td style="font-weight:600">BKSAFEDB</td><td>Db2 Database</td>
+          <td><span class="badge badge-amber">8 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · Db2 agent error</td>
+        </tr>
+        <tr>
+          <td style="color:var(--amber);font-weight:700">4</td>
+          <td style="font-weight:600">BKSTMTDB</td><td>Db2 Database</td>
+          <td><span class="badge badge-amber">8 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · Db2 agent error</td>
+        </tr>
+        <tr>
+          <td style="color:var(--amber);font-weight:700">4</td>
+          <td style="font-weight:600">DADWQD2</td><td>Db2 Database</td>
+          <td><span class="badge badge-amber">8 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · Db2 agent error</td>
+        </tr>
+        <tr>
+          <td style="color:var(--amber);font-weight:700">4</td>
+          <td style="font-weight:600">P2GWRSDB</td><td>Db2 Database</td>
+          <td><span class="badge badge-amber">8 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · Db2 agent error</td>
+        </tr>
+        <tr>
+          <td style="color:var(--amber);font-weight:700">4</td>
+          <td style="font-weight:600">YMACTLDB</td><td>Db2 Database</td>
+          <td><span class="badge badge-amber">8 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · Db2 agent error</td>
+        </tr>
+        <tr>
+          <td style="color:var(--amber);font-weight:700">4</td>
+          <td style="font-weight:600">YWRQSTDB</td><td>Db2 Database</td>
+          <td><span class="badge badge-amber">8 failures</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">Unable to synchronize log backups · Db2 agent error</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<div class="page" id="page-action-items">
+  <div class="page-header">
+    <div>
+      <div class="page-header-title">Action Items</div>
+      <div class="page-header-sub">June 23, 2026 — Reviewing USAA's pre-submitted questions on NAS Cloud Direct</div>
+    </div>
+  </div>
+
+  <div class="callout callout-blue" style="margin-bottom:24px">
+    <strong>This week's action items</strong> are responses to NAS Cloud Direct questions submitted by USAA via email ahead of this session. Answers are provided below for review and discussion.
+  </div>
+
+  <!-- Q1 -->
+  <div class="idea-card" style="border-left-color:var(--rubrik-blue);margin-bottom:14px">
+    <div class="idea-header">
+      <div class="idea-title">Q1 &mdash; How often are updates applied to NCD?</div>
+      <span class="badge badge-blue">NCD Operations</span>
+    </div>
+    <div class="idea-body">
+      <p>NAS Cloud Direct is delivered as a SaaS service. The control plane and NCD console are updated by Rubrik on a <strong>roughly weekly cadence</strong>, with additional hotfixes rolled out as needed. Sites on the standard auto-upgrade channel receive these updates automatically — no customer maintenance windows or patching steps are required.</p>
+      <p>The stateless VM image itself is periodically refreshed (new OVA/VHD builds), but redeployment is only needed when onboarding a new site or when Rubrik Support specifically recommends it (e.g., for a major update). Existing VMs continue working against the updated service automatically.</p>
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="idea-card" style="border-left-color:var(--rubrik-blue);margin-bottom:14px">
+    <div class="idea-header">
+      <div class="idea-title">Q2 &mdash; Do we get any notification on updates?</div>
+      <span class="badge badge-blue">NCD Operations</span>
+    </div>
+    <div class="idea-body">
+      <p>There is no per-release software update email for NCD — updates are applied transparently on the SaaS side and existing jobs, policies, and data continue to run as-is. For operational awareness, two notification mechanisms are available:</p>
+      <p><strong>Job / failure notifications:</strong> NCD can send email alerts on job failures. SMTP settings are configured via a Rubrik Support request.</p>
+      <p><strong>RSC notifications:</strong> In Rubrik Security Cloud, email notification preferences can be configured for events (backup failures, anomalies, etc.) for any recipients you choose.</p>
+      <p>In summary: you are notified about <strong>operational impact</strong> (failed jobs, anomalies), but not every background software release.</p>
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="idea-card" style="border-left-color:var(--rubrik-blue);margin-bottom:14px">
+    <div class="idea-header">
+      <div class="idea-title">Q3 &mdash; If an NCD VM is corrupted and has to be rebuilt, what happens?</div>
+      <span class="badge badge-blue">NCD Resilience</span>
+    </div>
+    <div class="idea-body">
+      <p><strong>NCD VMs are stateless.</strong> All file metadata, indexes, policies, and job history live in Rubrik's managed control plane — not on the VM disk. If a VM is lost or corrupted, the recovery steps are:</p>
+      <p><strong>1.</strong> Download a fresh NCD VM image for that same site.<br>
+      <strong>2.</strong> Deploy it on your hypervisor (vSphere, Hyper-V, AHV, etc.) with network access to the NAS systems, backup targets, and the NCD/RSC endpoints.<br>
+      <strong>3.</strong> Power it on and wait until the console shows "Network connection healthy" and "Services connected."</p>
+      <p>Once connected, the VM automatically re-attaches to the existing site in the control plane and recovers:</p>
+      <p>— All previously added systems and shares/exports<br>
+      — Existing backup/archive policies and targets<br>
+      — Historical backups and indexes</p>
+      <p>Backups and restores resume incrementally from where they left off. <strong>No re-seeding of data is required.</strong> Rubrik protects control-plane metadata with multi-AZ durability in its own AWS accounts.</p>
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="idea-card" style="border-left-color:var(--rubrik-blue);margin-bottom:14px">
+    <div class="idea-header">
+      <div class="idea-title">Q4 &mdash; How does it work when adding multiple NCD VMs?</div>
+      <span class="badge badge-blue">NCD Scaling</span>
+    </div>
+    <div class="idea-body">
+      <p>NAS Cloud Direct scales out by adding more stateless VMs to the <strong>same site</strong> — not by creating separate, independent appliances. Each VM can drive up to <strong>~5 Gbps</strong>, and task concurrency scales with the number of VMs deployed.</p>
+      <p>In Rubrik Security Cloud, you see <strong>one NAS Cloud Direct site/cluster</strong> per environment (e.g., "SAT-PROD"). The individual VMs are not exposed as separate objects in RSC — they are internal data movers associated with that site. Managing five NCD VMs for SAT-PROD means they all appear collectively as a single NCD entry in RSC's inventory and reports (with "NCD Site" as a column), rather than five separate clusters.</p>
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="idea-card" style="border-left-color:var(--rubrik-teal);margin-bottom:14px">
+    <div class="idea-header">
+      <div class="idea-title">Q5 &mdash; What are the steps to "move NCD to RSC"?</div>
+      <span class="badge badge-teal">NCD Roadmap</span>
+    </div>
+    <div class="idea-body">
+      <p>There are two distinct operating modes today:</p>
+      <p><strong>Standalone NCD (legacy):</strong> Policies and management live in the NCD console.<br>
+      <strong>NCD-via-RSC:</strong> NCD is fully integrated with RSC for SLA Domains, RBAC, reporting, retention lock, and more — while the data path stays VM → target.</p>
+      <p><strong>Current state:</strong> Full migration of existing standalone NCD sites into RSC-managed mode is <strong>not yet GA</strong>. The migration tooling for existing customers is targeted for <strong>FY27</strong>. Until that migration wizard is available, a full lift-and-shift of an existing NCD site into SLA-Domain-managed RSC mode is not customer-performable.</p>
+      <p><strong>What's available today</strong> for existing NCD customers without a full migration:</p>
+      <p>— Events &amp; webhooks for NCD<br>
+      — RBAC for restore-only and view-only access<br>
+      — Multi-file (shopping-cart) restore from RSC<br>
+      — NAS CD reporting (Protection / Object Capacity / Compliance reports)</p>
+      <p><strong>Recommendation:</strong> For <em>new</em> NCD sites, deploy in NCD-via-RSC mode from day one. For USAA's <em>existing</em> standalone NCD sites, enable the partial RSC integration pieces today, and once Rubrik releases the migration wizard (FY27) we'll have a guided, in-place path to move to full RSC management — without re-seeding data.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const dateLabels = {'2026-06-23':'June 23, 2026','2026-06-22':'June 22, 2026','2026-03-22':'March 22, 2026','2025-12-15':'December 15, 2025','2025-09-10':'September 10, 2025','2025-06-18':'June 18, 2025'};
+
+function updateReviewDate() {
+  const val = document.getElementById('reviewDateSelect').value;
+  document.getElementById('displayDate').textContent = dateLabels[val] || val;
+}
+
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  new Chart(document.getElementById('caseStatusChart'), {
+    type: 'doughnut',
+    data: { labels: ['Resolved','Resolved – Pending Customer','Pending Fix'], datasets: [{ data: [1,3,1], backgroundColor: ['#1a8a4a','#e07b00','#c0392b'], borderWidth: 2, borderColor: '#ffffff' }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+  });
+  new Chart(document.getElementById('jiraStatusChart'), {
+    type: 'doughnut',
+    data: { labels: ['Investigating – Info Req.','Investigating','Accepted – Info Req.'], datasets: [{ data: [1,1,1], backgroundColor: ['#0047BB','#00B4D8','#8fa0b4'], borderWidth: 2, borderColor: '#ffffff' }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+  });
+  new Chart(document.getElementById('overallStatusChart'), {
+    type: 'doughnut',
+    data: { labels: ['Succeeded','Succeeded w/ Warnings','Failed','Canceled'], datasets: [{ data: [7606,218,196,9], backgroundColor: ['#1a8a4a','#e07b00','#c0392b','#8fa0b4'], borderWidth: 2, borderColor: '#ffffff' }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+  });
+  new Chart(document.getElementById('failureTypeChart'), {
+    type: 'doughnut',
+    data: { labels: ['Db2 Database','NAS on RSC','vSphere VM','SQL Server DB','Other'], datasets: [{ data: [131,28,22,12,3], backgroundColor: ['#c0392b','#0047BB','#00B4D8','#8fa0b4','#b45d00'], borderWidth: 2, borderColor: '#ffffff' }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+  });
+  new Chart(document.getElementById('durationDistChart'), {
+    type: 'bar',
+    data: {
+      labels: ['< 1 min','1 – 5 min','5 – 15 min','15 – 30 min','30 – 60 min','1 – 2 hr','2 – 5 hr','5 – 10 hr','> 10 hr'],
+      datasets: [{
+        label: 'Tasks',
+        data: [17, 3652, 3122, 522, 278, 141, 59, 21, 11],
+        backgroundColor: ['#1a8a4a','#1a8a4a','#1a8a4a','#1a8a4a','#e07b00','#e07b00','#c0392b','#c0392b','#c0392b'],
+        borderRadius: 4,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+  loadNotes();
+});
+
+let actions = [];
+function loadActions() { try { actions = JSON.parse(localStorage.getItem('usaa_actions') || '[]'); } catch(e) { actions = []; } renderActions(); }
+function saveActions() { localStorage.setItem('usaa_actions', JSON.stringify(actions)); }
+function addAction() {
+  const text = document.getElementById('actionInput').value.trim();
+  if (!text) return;
+  const owner = document.getElementById('actionOwner').value;
+  const priority = document.getElementById('actionPriority').value;
+  const now = new Date().toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+  actions.push({ id: Date.now(), text, owner, priority, done: false, date: now });
+  document.getElementById('actionInput').value = '';
+  saveActions(); renderActions();
+}
+function toggleAction(id) { const a = actions.find(x=>x.id===id); if(a){a.done=!a.done;saveActions();renderActions();} }
+function deleteAction(id) { actions=actions.filter(x=>x.id!==id); saveActions(); renderActions(); }
+function priorityBadge(p) {
+  if(p==='High') return '<span class="badge badge-red">High</span>';
+  if(p==='Low') return '<span class="badge badge-gray">Low</span>';
+  return '<span class="badge badge-amber">Medium</span>';
+}
+function renderActions() {
+  const list = document.getElementById('actionList');
+  if (!actions.length) { list.innerHTML = '<div class="empty-state"><p>No action items yet. Add one above to track follow-ups from this review.</p></div>'; return; }
+  list.innerHTML = actions.map(a => `
+    <div class="action-item ${a.done?'done':''}">
+      <input type="checkbox" class="action-check" ${a.done?'checked':''} onchange="toggleAction(${a.id})">
+      <div class="action-content">
+        <div class="action-text">${a.text}</div>
+        <div class="action-meta">
+          ${a.owner?`<span class="meta-pill">${a.owner}</span>`:''}
+          ${priorityBadge(a.priority)}
+          <span class="meta-pill">Added ${a.date}</span>
+        </div>
+      </div>
+      <button class="btn-danger" onclick="deleteAction(${a.id})">Remove</button>
+    </div>`).join('');
+}
+
+function saveNotes() {
+  const txt = document.getElementById('meetingNotes').value;
+  const dateVal = document.getElementById('reviewDateSelect').value;
+  const dateStr = dateLabels[dateVal] || dateVal;
+  const saved = { text: txt, savedAt: new Date().toLocaleString(), reviewDate: dateStr };
+  localStorage.setItem('usaa_meeting_notes', JSON.stringify(saved));
+  document.getElementById('noteSaveStatus').style.display = 'inline';
+  setTimeout(() => document.getElementById('noteSaveStatus').style.display = 'none', 2000);
+  renderNotes(saved);
+}
+function loadNotes() { try { const s=JSON.parse(localStorage.getItem('usaa_meeting_notes')); if(s){document.getElementById('meetingNotes').value=s.text||'';renderNotes(s);} } catch(e){} }
+function renderNotes(saved) {
+  if (!saved||!saved.text) return;
+  document.getElementById('savedNotesDisplay').innerHTML = `<div class="saved-note"><div class="saved-note-meta">Saved ${saved.savedAt} · Review date: ${saved.reviewDate}</div>${saved.text}</div>`;
+}
+</script>
+</body>
+</html>
