@@ -344,23 +344,23 @@
 
   <div class="section-title">License Entitlement vs. Consumption</div>
   <div class="callout callout-blue">
-    <strong>Entitlement summary:</strong> <strong>Foundation Edition</strong> — consumed by total usable capacity of all physical clusters: 28,266 TB of 37,000 BETB licensed (76.4%, 8,735 BETB headroom). <strong>Enterprise Edition</strong> — consumed by primary local storage across all clusters (excluding replica copies): 5,961 TB of 24,000 BETB licensed (24.8%, 18,039 BETB headroom). <strong>NAS Cloud Direct</strong> — 190 GB of 12,000 FETB protected (~1.5%). All licenses expire July 2030.
+    <strong>Entitlement summary:</strong> <strong>Foundation Edition</strong> licenses the total <em>usable capacity</em> of all physical (non-NCD) clusters — 28.27 PB deployed of 37.00 PB licensed (76.4%, 8.74 PB headroom). Every cluster, regardless of how much data it stores, consumes Foundation based on its hardware footprint. <strong>Enterprise Edition</strong> licenses only the <em>primary copy</em> of locally protected data — 5.96 PB of 24.00 PB licensed (24.8%, 18.04 PB headroom). Replicated data on each cluster requires Foundation for the cluster's usable capacity but does <em>not</em> require additional Enterprise licenses, since the primary copy is already licensed at its source cluster. These two licenses are independent metrics and are not additive. <strong>NAS Cloud Direct</strong> — 190 GB of 12.00 PB FETB protected (~1.5%). All licenses expire July 2030.
   </div>
   <div class="metric-grid metric-grid-4">
     <div class="metric-card accent-amber">
-      <div class="metric-label">Foundation Consumed</div>
+      <div class="metric-label">Foundation — Usable Capacity</div>
       <div class="metric-value" style="color:var(--amber)">76.4%</div>
-      <div class="metric-sub">28,266 TB usable of 37,000 BETB · 8,735 headroom</div>
+      <div class="metric-sub">28.27 PB of 37.00 PB · all clusters · 8.74 PB headroom</div>
     </div>
     <div class="metric-card accent-green">
-      <div class="metric-label">Enterprise Consumed</div>
+      <div class="metric-label">Enterprise — Primary Data Only</div>
       <div class="metric-value" style="color:var(--green)">24.8%</div>
-      <div class="metric-sub">5,961 TB primary of 24,000 BETB · 18,039 headroom</div>
+      <div class="metric-sub">5.96 PB of 24.00 PB · replicas excluded · 18.04 PB headroom</div>
     </div>
     <div class="metric-card accent-amber">
       <div class="metric-label">NAS Cloud Direct</div>
       <div class="metric-value" style="color:var(--amber)">~1.5%</div>
-      <div class="metric-sub">190 GB of 12,000 FETB · large headroom</div>
+      <div class="metric-sub">190 GB of 12.00 PB FETB · large headroom</div>
     </div>
     <div class="metric-card accent-blue">
       <div class="metric-label">All Licenses Expire</div>
@@ -402,26 +402,26 @@
   </div>
 
   <div class="callout callout-blue" style="margin-bottom:20px">
-    <strong>How license consumption is calculated:</strong> <strong>Foundation Edition</strong> is consumed by the total <em>usable capacity</em> of all deployed physical (non-NCD) clusters — 28.27 PB across 8 clusters against a 37.00 PB licensed pool (76.4%). <strong>Enterprise Edition</strong> is consumed by the <em>primary local storage</em> of protected objects — data originating on each cluster, excluding replica copies received from elsewhere — totaling 5.96 PB against a 24.00 PB licensed pool (24.8%). <strong>NAS Cloud Direct</strong> is measured by front-end data protected (FETB), not storage capacity.
+    <strong>How license consumption is calculated:</strong> <strong>Foundation Edition</strong> is consumed by the total <em>usable capacity</em> of all deployed physical (non-NCD) clusters — every cluster is counted by its hardware footprint, whether it holds primary data, replica data, or both. 28.27 PB deployed of 37.00 PB licensed (76.4%). <strong>Enterprise Edition</strong> licenses only the <em>primary copy</em> of locally protected data. Every cluster holds both primary workloads and replicated data from other clusters for DR — the replicated portion requires Foundation (for cluster hardware) but does <em>not</em> consume additional Enterprise licenses, since those primaries are already licensed at their source. Enterprise consumed: 5.96 PB of 24.00 PB (24.8%). Foundation and Enterprise are independent metrics — they are not additive totals. <strong>NAS Cloud Direct</strong> is licensed on front-end data protected (FETB), not storage capacity.
   </div>
 
   <!-- ── OVERALL SUMMARY ── -->
   <div class="section-title">Overall License Consumption Summary</div>
   <div class="metric-grid metric-grid-4" style="margin-bottom:24px">
-    <div class="metric-card accent-blue">
-      <div class="metric-label">Total Licensed</div>
-      <div class="metric-value">61.00 <span style="font-size:16px;font-weight:500">PB</span></div>
-      <div class="metric-sub">Foundation 37 PB + Enterprise 24 PB</div>
-    </div>
     <div class="metric-card accent-amber">
-      <div class="metric-label">Foundation Consumed</div>
+      <div class="metric-label">Foundation — Usable Capacity</div>
       <div class="metric-value" style="color:var(--amber)">28.27 <span style="font-size:16px;font-weight:500">PB</span></div>
-      <div class="metric-sub">Usable capacity deployed — 76.4%</div>
+      <div class="metric-sub">of 37.00 PB licensed · 76.4% · all cluster hardware</div>
     </div>
     <div class="metric-card accent-green">
-      <div class="metric-label">Enterprise Consumed</div>
+      <div class="metric-label">Enterprise — Primary Data Only</div>
       <div class="metric-value" style="color:var(--green)">5.96 <span style="font-size:16px;font-weight:500">PB</span></div>
-      <div class="metric-sub">Primary local storage — 24.8%</div>
+      <div class="metric-sub">of 24.00 PB licensed · 24.8% · replicas excluded</div>
+    </div>
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Replica Data (no EE license needed)</div>
+      <div class="metric-value">6.20 <span style="font-size:16px;font-weight:500">PB</span></div>
+      <div class="metric-sub">Covered by Foundation only — primary licensed at source</div>
     </div>
     <div class="metric-card accent-amber">
       <div class="metric-label">NAS Cloud Direct</div>
@@ -431,7 +431,7 @@
   </div>
 
   <!-- ── FOUNDATION ── -->
-  <div class="section-title">Foundation Edition — RS-BT-FE-SC-PE-PP</div>
+  <div class="section-title">Foundation Edition — RS-BT-FE-SC-PE-PP &nbsp;<span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">Metric: total usable capacity of all physical clusters</span></div>
   <div class="metric-grid metric-grid-4" style="margin-bottom:16px">
     <div class="metric-card accent-blue">
       <div class="metric-label">Licensed</div>
@@ -509,10 +509,10 @@
       </tbody>
     </table>
   </div>
-  <p style="font-size:11px;color:var(--text-muted);margin-bottom:24px;padding:0 4px">Foundation license consumption = total usable capacity across all 8 deployed physical (non-NCD) clusters. As clusters are expanded or new hardware is added, Foundation PB consumed increases regardless of how much data is stored.</p>
+  <p style="font-size:11px;color:var(--text-muted);margin-bottom:24px;padding:0 4px">Foundation license consumption = total usable capacity of all 8 physical (non-NCD) clusters — regardless of how much primary or replica data resides on each cluster. Every cluster, whether acting as a primary site, a DR replica target, or both, consumes Foundation based solely on its hardware footprint. As clusters are expanded or new hardware is added, Foundation consumed increases automatically.</p>
 
   <!-- ── ENTERPRISE ── -->
-  <div class="section-title">Enterprise Edition — RS-BT-EE-SC-PE-PP</div>
+  <div class="section-title">Enterprise Edition — RS-BT-EE-SC-PE-PP &nbsp;<span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">Metric: primary copy of local backup data only — replicas excluded</span></div>
   <div class="metric-grid metric-grid-4" style="margin-bottom:16px">
     <div class="metric-card accent-blue">
       <div class="metric-label">Licensed</div>
@@ -590,7 +590,7 @@
       </tbody>
     </table>
   </div>
-  <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;padding:0 4px">Enterprise license consumption = primary local storage only (Object Capacity report, column Q, where Replica Storage = 0). Replica copies received from other clusters are excluded. Note: prdrbrk1atl is the primary home of the largest workloads (4.26 PB primary); satpsc1cu1rbrk1 holds mostly replica data (4.60 PB replica vs. 0.65 PB primary).</p>
+  <p style="font-size:11px;color:var(--text-muted);margin-bottom:16px;padding:0 4px">Enterprise license consumption = primary local backup data only (Object Capacity report, column Q, Replica Storage = 0). Every cluster carries both primary workloads and replicated data received from other clusters for DR purposes. The replicated portion on each cluster is covered by Foundation (hardware footprint) but does not consume Enterprise licenses — those primaries are already licensed at their originating cluster. Foundation and Enterprise licenses measure completely different things and are not aggregated together.</p>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
     <div style="background:#f8f9fc;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
@@ -605,12 +605,14 @@
       </div>
     </div>
     <div style="background:#f8f9fc;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px">Replication Context</div>
-      <div style="font-size:13px;display:flex;flex-direction:column;gap:7px">
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Total primary data</span><span style="font-weight:600">5.96 PB</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Total replica data</span><span style="font-weight:600">6.20 PB</span></div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px">How Replication Affects Licensing</div>
+      <div style="font-size:13px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Total primary data (all clusters)</span><span style="font-weight:600">5.96 PB</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text-secondary)">Total replica data (all clusters)</span><span style="font-weight:600">6.20 PB</span></div>
         <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:2px"><span style="color:var(--text-secondary)">Total local storage</span><span style="font-weight:600">12.16 PB</span></div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Replicas are excluded from Enterprise consumption — only primary (source) copies count.</div>
+        <div style="background:#e6eefa;border-radius:6px;padding:8px 10px;margin-top:4px;font-size:11px;color:#1a3a72;line-height:1.5">
+          <strong>Every cluster holds both primary and replica data.</strong> Replica data consumes <strong>Foundation</strong> (cluster hardware must exist to store it) but requires <strong>no additional Enterprise</strong> license — the primary copy is already licensed at its source cluster. Foundation and Enterprise are independent — not additive.
+        </div>
       </div>
     </div>
   </div>
@@ -651,14 +653,14 @@
       <tbody>
         <tr>
           <td style="font-weight:600">Foundation Edition</td>
-          <td>28.27 PB usable capacity deployed of 37.00 PB licensed (76.4%). Headroom is 8.74 PB. Adding new cluster hardware directly reduces this headroom.</td>
-          <td>Validate any planned hardware expansion against the 8.74 PB of remaining headroom. The two large production clusters alone consume 63.8% of the licensed pool.</td>
+          <td>28.27 PB of 37.00 PB licensed (76.4%, 8.74 PB headroom). Applies to all cluster hardware regardless of data stored — primary, replica, or free space all count equally toward Foundation consumption.</td>
+          <td>Validate any planned hardware expansion against the 8.74 PB headroom. The two large production clusters (prdrbrk1atl + satpsc1cu1rbrk1) account for 63.8% of the licensed pool on their own.</td>
           <td><span class="badge badge-amber">Medium</span></td>
         </tr>
         <tr>
           <td style="font-weight:600">Enterprise Edition</td>
-          <td>5.96 PB of primary backup data of 24.00 PB licensed (24.8%). Headroom is 18.04 PB. prdrbrk1atl is the dominant primary source at 4.26 PB (17.8% of pool).</td>
-          <td>Significant headroom remains. Monitor primary data growth on prdrbrk1atl. Note satpsc1cu1rbrk1 holds mostly replica data (4.60 PB replica vs. 0.65 PB primary) — confirm replication topology is intentional.</td>
+          <td>5.96 PB of 24.00 PB licensed (24.8%, 18.04 PB headroom). Covers only primary backup data across all clusters — the 6.20 PB of replica data on these same clusters requires no additional Enterprise licenses as those primaries are licensed at source.</td>
+          <td>Significant headroom remains. Monitor primary data growth on prdrbrk1atl (4.26 PB, 17.8% of pool). No action needed for replica volumes — these do not consume Enterprise entitlement.</td>
           <td><span class="badge badge-blue">Low</span></td>
         </tr>
         <tr>
@@ -860,7 +862,7 @@
 
   <div class="section-title">Entitlement vs. Deployed Capacity Comparison</div>
   <div class="callout callout-blue" style="margin-bottom:20px">
-    <strong>How to read this:</strong> BETB (Back-End Terabyte) represents licensed usable storage capacity. Each physical cluster's <em>usable capacity</em> from the infrastructure report is compared here against the total BETB entitlement pool. NAS Cloud Direct uses FETB (Front-End Terabyte) and is measured by data protected, not storage deployed.
+    <strong>How to read this:</strong> <strong>Foundation Edition</strong> (BETB) is measured by total usable cluster capacity — all 8 physical clusters combined, regardless of what data they store. <strong>Enterprise Edition</strong> (BETB) is measured by primary backup data only — every cluster carries both primary and replica data, but only the primary portion consumes Enterprise. Replica data on each cluster needs Foundation (hardware footprint) but no additional Enterprise, since the primary is already licensed at its source. These two SKUs measure independent dimensions and are not summed together. NAS Cloud Direct uses FETB (front-end data protected), a separate metric.
   </div>
 
   <div class="ent-comparison-card" style="margin-bottom:24px">
@@ -974,21 +976,26 @@
   </div>
 
   <div class="section-title">Capacity vs. Entitlement Summary</div>
-  <div class="metric-grid metric-grid-3" style="margin-bottom:24px">
+  <div class="metric-grid metric-grid-4" style="margin-bottom:24px">
     <div class="metric-card accent-amber">
-      <div class="metric-label">Foundation — Usable Capacity Deployed</div>
-      <div class="metric-value" style="color:var(--amber)">28,266 TB</div>
-      <div class="metric-sub">76.4% of 37,000 BETB · 8,735 BETB headroom</div>
+      <div class="metric-label">Foundation — All Cluster Hardware</div>
+      <div class="metric-value" style="color:var(--amber)">28.27 PB</div>
+      <div class="metric-sub">76.4% of 37.00 PB licensed · 8.74 PB headroom</div>
     </div>
     <div class="metric-card accent-green">
-      <div class="metric-label">Enterprise — Primary Data Protected</div>
-      <div class="metric-value" style="color:var(--green)">5,961 TB</div>
-      <div class="metric-sub">24.8% of 24,000 BETB · 18,039 BETB headroom</div>
+      <div class="metric-label">Enterprise — Primary Data Only</div>
+      <div class="metric-value" style="color:var(--green)">5.96 PB</div>
+      <div class="metric-sub">24.8% of 24.00 PB licensed · 18.04 PB headroom</div>
+    </div>
+    <div class="metric-card accent-blue">
+      <div class="metric-label">Replica Data (Foundation only)</div>
+      <div class="metric-value">6.20 PB</div>
+      <div class="metric-sub">No Enterprise needed — primary licensed at source</div>
     </div>
     <div class="metric-card accent-amber">
       <div class="metric-label">NAS Cloud Direct</div>
       <div class="metric-value" style="color:var(--amber)">~1.5%</div>
-      <div class="metric-sub">190 GB of 12,000 FETB protected</div>
+      <div class="metric-sub">190 GB of 12.00 PB FETB protected</div>
     </div>
   </div>
 
@@ -1059,10 +1066,10 @@
         </tr>
         <tr class="total-row">
           <td colspan="2"><strong>Total (all physical clusters)</strong></td>
-          <td><strong>28,265.5 TB usable</strong></td>
-          <td><strong>76.4% of 37,000 BETB</strong></td>
-          <td><strong>5,961.4 TB primary</strong></td>
-          <td><strong>24.8% of 24,000 BETB</strong></td>
+          <td><strong>28.27 PB usable</strong><br><span style="font-size:11px;font-weight:400;color:var(--text-muted)">Foundation metric</span></td>
+          <td><strong>76.4% of 37.00 PB</strong></td>
+          <td><strong>5.96 PB primary</strong><br><span style="font-size:11px;font-weight:400;color:var(--text-muted)">Enterprise metric · 6.20 PB replica excluded</span></td>
+          <td><strong>24.8% of 24.00 PB</strong></td>
         </tr>
       </tbody>
     </table>
